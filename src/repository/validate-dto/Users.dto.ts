@@ -1,6 +1,3 @@
-import { TrackEntity } from "../entities";
-import { IsDefined, IsOptional, IsString } from "class-validator";
-import { UsersEntity } from "../entities/users.entity";
 
 // export class UsersDto extends UsersEntity  {
 //   @IsDefined()

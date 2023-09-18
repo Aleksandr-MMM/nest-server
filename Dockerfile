@@ -16,4 +16,5 @@ COPY --from=builder /app/package.json ./
 COPY --from=builder /app/config.yml ./
 COPY --from=builder /app/certificate ./certificate
 ENTRYPOINT [ "/sbin/tini", "--" ]
+EXPOSE 3000/tcp
 CMD [ "node", "dist/main.js" ]
