@@ -1,0 +1,1 @@
+{"version":3,"file":"BaseClientException.js","sourceRoot":"","sources":["../../src/exception/BaseClientException.ts"],"names":[],"mappings":";;;AAAA,2CAA+C;AAI/C,MAAa,mBAAoB,SAAQ,sBAAa;IACpD,YAAY,UAAiB,EAAC,OAAc;QAC1C,KAAK,CAAC;YACF,IAAI,EAAE,IAAI,EAAE,UAAU,EAAE,UAAU;YAClC,OAAO,EAAE,OAAO;SACjB,EACA,UAAU,CAAC,CAAC;IACjB,CAAC;CACF;AARD,kDAQC"}

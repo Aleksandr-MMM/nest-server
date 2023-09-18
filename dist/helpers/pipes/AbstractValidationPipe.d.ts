@@ -1,0 +1,11 @@
+import { ArgumentMetadata, Type, ValidationPipe, ValidationPipeOptions } from "@nestjs/common";
+export declare class AbstractValidationPipe extends ValidationPipe {
+    private readonly targetTypes;
+    constructor(options: ValidationPipeOptions, targetTypes: {
+        body?: Type | any;
+        query?: Type;
+        param?: Type;
+        custom?: Type;
+    });
+    transform(value: any, metadata: ArgumentMetadata): Promise<any>;
+}

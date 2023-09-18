@@ -1,0 +1,16 @@
+environment: 'production'
+names:
+  - Aleksandr
+
+db:
+  raven:
+    database: 'MusicProduct'
+    url: 'https://a.free.mmmalexmmm.ravendb.cloud'
+    secure: 'true'
+    certificate: './certificate/certificateForNest.pfx'
+    passphrase: 'teat787891'
+
+mail:
+  user: 'virus_2010-2009@mail.ru'
+  pass: 'HKNLwAsXvzbWpXX80gUS'
+PORT: '3000'
