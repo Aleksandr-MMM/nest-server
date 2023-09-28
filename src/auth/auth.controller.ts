@@ -7,11 +7,10 @@ import {
   Req,
   Res,
   UseGuards,
-  UseInterceptors,
   UsePipes
 } from "@nestjs/common";
 import { AuthService } from "./Auth.service";
-import { UsersDto, UsersRegistrationDto } from "../repository/validate-dto/Auth.dto";
+import { UsersDto } from "../repository/validate-dto/Auth.dto";
 import { AbstractValidationPipe } from "../helpers/pipes/AbstractValidationPipe";
 import { PersistenceService } from "../repository";
 import { UsersEntity } from "../repository/entities/users.entity";
@@ -21,14 +20,17 @@ import { MailerService } from "@nestjs-modules/mailer";
 import { RegMailSettings } from "../globalModule/nestMailerModule/registrarionMail/RegMailSettings";
 import { baseUrl } from "../main";
 import { BadReqTypeException } from "../exception/ClientException";
+import { Role } from "../guard/RoleGuard/role.enum";
 
 const authUrlController = "auth";
-const confirmReg = "confirmReg";
-const urlMail = `${authUrlController}/${confirmReg}`;
+const confirmRegUrl="confirmReg";
 
 @Controller(authUrlController)
 export class AuthController {
   public currentRepository;
+  private readonly emailTimerMin:number=15;
+
+  private readonly urlMail:string=`${authUrlController}/${confirmRegUrl}`;
 
   constructor(readonly persistence: PersistenceService,
               readonly authService: AuthService,
@@ -50,47 +52,55 @@ export class AuthController {
   }, {
     body: UsersDto
   }))
-  @UseInterceptors(AuthGuard)
   async signIn(@Body() bodyReq: UsersDto,
                @Res({ passthrough: true }) response) {
-    const [email, id] = await this.currentRepository.findUserByEmailAndPass(
-      bodyReq.email, bodyReq.password);
-    return this.authService.signIn(email, id);
+    const [email, id,giveRole] = await this.currentRepository.findUserByEmailAndPass(
+      bodyReq.email, bodyReq.password,{getRole:true});
+    return this.authService.signIn(email, id,giveRole);
   }
 
   @Post("registration")
+  // @Throttle({ default: { limit: 1, ttl: minutes(emailTimerMin) } })
   @UsePipes(new AbstractValidationPipe({
     whitelist: true,
     forbidNonWhitelisted: true
   }, {
     body: UsersDto
   }))
-  async registration(@Body() body: UsersRegistrationDto) {
-    const link: string = `${baseUrl}/${urlMail}/` + (await this.authService.getTemporaryToken(
-      body.email, body.password)).access_token;
-    let response = "Something wrong";
-    await this.mailerService
-      .sendMail(RegMailSettings(body.email, link))
-      .then(() => {
-        response = "Email send";
-      })
-      .catch((e) => {
-        console.log(e)
-      });
-    return response;
+  async registration(@Body() body: UsersDto) {
+    if (!await this.currentRepository.findUserByEmail(body.email)) {
+      const link: string = `${baseUrl}/${this.urlMail}/` + (await this.authService.getTemporaryToken(
+        body.email, body.password,[Role.User])).access_token;
+      let response = "Something wrong";
+
+      await this.mailerService
+        .sendMail(RegMailSettings(body.email, link))
+        .then(() => {
+          response = `Email has been sent and is valid for ${this.emailTimerMin} minutes`;
+        })
+        .catch((e) => {
+          console.log(e)
+        });
+      return response;
+    } else {
+      throw new BadReqTypeException("Email already registration");
+    }
+
   }
 
-  @Get(`${confirmReg}/:token`)
+  @Get(`${confirmRegUrl}/:token`)
   async confirmReg(@Param("token") token: string) {
-    const tokenProperty: { email: string, password: string } = (await this.authService.token(token));
-    const newUser:any = { email: tokenProperty.email, password: tokenProperty.password };
+
+    const tokenProperty: { email: string, password: string, roles: Role[] } = (await this.authService.token(token));
+
+    const newUser: any = { email: tokenProperty.email, password: tokenProperty.password };
     const email = await this.currentRepository.findUserByEmail(
       newUser.email);
-    if(email===undefined){
-      return this.currentRepository.createNewUser(newUser);
-    }
-    else {
-      throw new BadReqTypeException('Email already registration')
+    if (email === undefined) {
+      return this.currentRepository.createNewUser(
+        newUser.email, tokenProperty.password, tokenProperty.roles);
+    } else {
+      throw new BadReqTypeException("Email already registration");
     }
   }
 }

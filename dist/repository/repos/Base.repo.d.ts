@@ -13,8 +13,8 @@ export declare class BaseRepo<TEntity extends BaseEntity> {
         collection: string;
     });
     protected combineFormatAndFilename(fileName: string): string;
-    checkPropForUndefinedAndSetNull(body: TEntity, ...entity: string[]): TEntity;
-    static updateEntityDate(entity: BaseEntity): void;
+    checkPropForUndefinedAndSetNull(body: TEntity, ...entity: string[]): TEntity | null;
+    updateEntityDate(entity: TEntity): void;
     openSesAndLoadDocById(id: string): Promise<[TEntity, IDocumentSession]>;
     updateDocument(entity: TEntity, id: string): Promise<TEntity>;
     storeDocument(body: TEntity, addExtraProperty?: object): Promise<TEntity>;

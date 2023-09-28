@@ -19,13 +19,12 @@ let UsersRepo = class UsersRepo extends Base_repo_1.BaseRepo {
         this.PROPERTY_USER_FRIENDS = "friends";
         this.PROPERTY_USER_SUBSCRIBE = "subscribe";
     }
-    removeSecretAccInfo(userProfile) {
+    removeProtectedInfo(userProfile) {
         if (!userProfile) {
             return null;
         }
         const conv = userProfile;
-        delete conv["password"];
-        delete conv["email"];
+        delete conv["protected"];
         return conv;
     }
     async _findUserByEmail(email) {
@@ -34,36 +33,43 @@ let UsersRepo = class UsersRepo extends Base_repo_1.BaseRepo {
         }
         return this.users.find(user => user.email === email);
     }
-    async createNewUser(newUser) {
+    async createNewUser(email, password, roles) {
         if (!this.users) {
             this.users = await this.retrieveDocuments();
         }
-        let result;
-        if (this.users.find(user => user.email === newUser.email) === undefined) {
-            newUser.subscribe = [];
-            newUser.friends = [];
-            newUser.status = null;
-            newUser.nikName = "Новый пользователь";
-            newUser.photo = null;
-            newUser.albumList = [];
-            result = await this.storeDocument(newUser);
+        let result = {};
+        if (this.users.find(user => user.email === email) === undefined) {
+            result.email = email;
+            result.subscribe = [];
+            result.friends = [];
+            result.status = null;
+            result.nikName = "Новый пользователь";
+            result.albumList = [];
+            result.protected = {
+                roles: roles,
+                password: password,
+            };
+            result = await this.storeDocument(result);
             this.users.push(result);
+            return this.removeProtectedInfo(result);
         }
         else {
             throw new ClientException_1.BadReqTypeException(this.ERROR_EMAIL_USE_TEXT);
         }
-        return this.removeSecretAccInfo(result);
     }
     async addAlbumForUser(myId, albumId) {
         const [result, session] = await this.openSesAndLoadDocById(myId);
         result.albumList.push(albumId);
         session.dispose();
-        return this.metadataRemove(result);
+        return this.metadataRemove(this.removeProtectedInfo(result));
     }
-    async findUserByEmailAndPass(email, pass) {
+    async findUserByEmailAndPass(email, pass, options) {
         const user = await this._findUserByEmail(email);
-        if ((user === null || user === void 0 ? void 0 : user.password) !== pass) {
+        if ((user === null || user === void 0 ? void 0 : user.protected.password) !== pass) {
             throw new ClientException_1.BadReqTypeException(this.ERROR_EMAIL_PASS_TEXT);
+        }
+        if (options.getRole) {
+            return [user.email, user.id, user.protected.roles];
         }
         return [user.email, user.id];
     }

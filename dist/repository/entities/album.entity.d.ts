@@ -4,6 +4,4 @@ export declare class AlbumEntity extends BaseEntity {
     albumName: string;
     trackList: Array<string>;
     lastUpdate: string;
-    dataRegistration: string;
-    constructor();
 }

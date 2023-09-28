@@ -13,13 +13,17 @@ import {
 import { PersistenceService } from "../../index";
 import { UsersRepo } from "../../repos/users.repo.";
 import { UsersEntity } from "../../entities/users.entity";
-import { AuthGuard } from "../../../guard/auth.guard";
 import { IdNotFoundException } from "../../../exception/ClientException";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { validateFilePipes } from "../../../helpers/pipes/ValidateFilePipes";
 import { AttachmentResult } from "ravendb";
+import { Roles } from "../../../guard/RoleGuard/roles.decorator";
+import { Role } from "../../../guard/RoleGuard/role.enum";
+import { RolesGuard } from "../../../guard/RoleGuard/roles.guard";
 
 @Controller("/user")
+@Roles(Role.User)
+@UseGuards(RolesGuard)
 export class UsersController {
   readonly currentRepository: UsersRepo;
 
@@ -28,7 +32,6 @@ export class UsersController {
   }
 
   @Put("/subscribe/:id")
-  @UseGuards(AuthGuard)
   async subscribeUser(
     @Req() req,
     @Param("id") userId: string
@@ -41,7 +44,6 @@ export class UsersController {
   }
 
   @Delete("/unSubscribe/:id")
-  @UseGuards(AuthGuard)
   async unSubscribeUser(
     @Req() req,
     @Param("id") userId: string
@@ -50,7 +52,6 @@ export class UsersController {
   }
 
   @Put("/addFriend/:id")
-  @UseGuards(AuthGuard)
   async addFriend(
     @Req() req,
     @Param("id") userId: string
@@ -63,7 +64,6 @@ export class UsersController {
   }
 
   @Delete("/unFriend/:id")
-  @UseGuards(AuthGuard)
   async unFriend(
     @Req() req,
     @Param("id") userId: string
@@ -72,7 +72,6 @@ export class UsersController {
   }
 
   @Post("/addPhoto")
-  @UseGuards(AuthGuard)
   @UseInterceptors(FileInterceptor("photo", { storage: null }))
   async addPhoto(
     @UploadedFile(

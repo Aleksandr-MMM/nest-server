@@ -6,13 +6,12 @@ import { ConfigService } from "@nestjs/config";
  */
 export const getDocumentStore = (config: ConfigService) => {
   let documentStore: DocumentStore;
-  if (config.get("db.raven.secure")) {
+  if (config.get("server.environment")==='production') {
     const authSettings: IAuthOptions = {
       certificate: fs.readFileSync(config.get("db.raven.certificate")),
       type: "pfx",
       password: config.get("db.raven.passphrase")
     };
-
     documentStore = new DocumentStore(
       config.get<string>("db.raven.url"),
       config.get<string>("db.raven.database"),

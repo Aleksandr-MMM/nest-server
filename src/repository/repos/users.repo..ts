@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { UsersEntity } from "../entities/users.entity";
 import { BaseRepo } from "./Base.repo";
 import { BadReqTypeException, IdNotFoundException } from "../../exception/ClientException";
+import { Role } from "../../guard/RoleGuard/role.enum";
 
 @Injectable()
 export class UsersRepo extends BaseRepo<UsersEntity> {
@@ -18,19 +19,18 @@ export class UsersRepo extends BaseRepo<UsersEntity> {
    * Удаляет секретные поля
    * @param userProfile профиль пользователя
    */
-  protected removeSecretAccInfo(userProfile: UsersEntity): UsersEntity {
+  protected removeProtectedInfo(userProfile: UsersEntity): UsersEntity {
 
     if (!userProfile) {
       return null;
     }
     const conv = userProfile;
-    delete conv["password"];
-    delete conv["email"];
+    delete conv["protected"];
     return conv;
   }
   /**
    * Удаляет секретные поля
-   * @param userProfile профиль пользователя
+   * @param email email пользователя
    */
   protected async _findUserByEmail(email:string):Promise<UsersEntity|undefined>{
     if (!this.users) {
@@ -40,27 +40,34 @@ export class UsersRepo extends BaseRepo<UsersEntity> {
   }
   /**
    * Создание нового пользователя после прохождения регистрации.
-   * @param newUser мой id профиля
+   * @param email мой  зарегестрированный email
+   * @param password пароль
+   * @param roles массив ролей
    */
-  public async createNewUser(newUser: UsersEntity): Promise<UsersEntity | undefined> {
+  public async createNewUser(email:string,password:string,roles:Role[])
+    : Promise<UsersEntity | undefined> {
     if (!this.users) {
       this.users = await this.retrieveDocuments();
     }
-    let result;
+    let result:any={}
     // check dont use email in db
-    if (this.users.find(user => user.email === newUser.email)===undefined) {
-      newUser.subscribe = [];
-      newUser.friends = [];
-      newUser.status = null;
-      newUser.nikName = "Новый пользователь";
-      newUser.photo = null;
-      newUser.albumList = [];
-      result=await this.storeDocument(newUser)
+    if (this.users.find(user => user.email === email)===undefined) {
+      result.email = email;
+      result.subscribe = [];
+      result.friends = [];
+      result.status = null;
+      result.nikName = "Новый пользователь";
+      result.albumList = [];
+      result.protected = {
+        roles:roles,
+        password:password,
+      };
+      result=await this.storeDocument(result)
       this.users.push(result);
+      return this.removeProtectedInfo(result);
     } else {
       throw new BadReqTypeException(this.ERROR_EMAIL_USE_TEXT);
     }
-    return this.removeSecretAccInfo(result);
   }
 
   /**
@@ -72,18 +79,24 @@ export class UsersRepo extends BaseRepo<UsersEntity> {
     const [result, session] = await this.openSesAndLoadDocById(myId);
     result.albumList.push(albumId);
     session.dispose();
-    return this.metadataRemove(result);
+    return this.metadataRemove(this.removeProtectedInfo(result));
   }
 
   /**
    * Возвращает данные о пользователи для авторизации
    * @param email email для авторизации
    * @param pass пароль для авторизации
+   * @param options необязательный параметр getRole.По умолчанию false.
    */
-  public async findUserByEmailAndPass(email: string, pass: string): Promise<string[]|undefined> {
+  public async findUserByEmailAndPass(
+    email: string, pass: string, options?:{getRole:boolean}): Promise<(string|Role[])[] | undefined> {
     const user =await this._findUserByEmail(email)
-    if (user?.password !== pass) {
+    if (user?.protected.password !== pass) {
       throw new BadReqTypeException(this.ERROR_EMAIL_PASS_TEXT);
+    }
+    if (options.getRole) {
+      // Не удалять данные емаил и пароля
+      return [user.email,user.id,user.protected.roles]
     }
     // Не удалять данные емаил и пароля
     return [user.email,user.id];

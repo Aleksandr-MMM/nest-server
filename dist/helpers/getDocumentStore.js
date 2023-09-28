@@ -5,7 +5,7 @@ const ravendb_1 = require("ravendb");
 const fs = require("fs");
 const getDocumentStore = (config) => {
     let documentStore;
-    if (config.get("db.raven.secure")) {
+    if (config.get("server.environment") === 'production') {
         const authSettings = {
             certificate: fs.readFileSync(config.get("db.raven.certificate")),
             type: "pfx",

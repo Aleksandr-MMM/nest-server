@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { jwtConstants } from "./constants";
+import { Role } from "../guard/RoleGuard/role.enum";
 
 @Injectable()
 export class AuthService {
@@ -9,7 +10,7 @@ export class AuthService {
    * @param obj свойство
    * @protected
    */
-  protected payloadRemove(obj) {
+  protected returnMailAndId(obj) {
     return { email: obj?.email, id: obj?.id };
   };
 
@@ -27,21 +28,21 @@ export class AuthService {
    * @param user Возвращает профиль текущего пользователя
    */
   public identificationMe(user) {
-    return this.payloadRemove(user);
+    return this.returnMailAndId(user);
   }
 
   /**
    * Возвращает зашифрованый токен(email,id) пользователя
    */
-  async signIn(email: string, id: string): Promise<any> {
-    return await this.getToken({ email: email,id:id });
+  async signIn(email: string, id: string,roles:Role[]): Promise<any> {
+    return await this.getToken({ email: email,id:id,roles:roles });
   }
 
   /**
    * Возвращает зашифрованый токен(email) пользователя
    */
-  async getTemporaryToken(email: string,pass:string): Promise<{access_token: string}> {
-    return await this.getToken({ email: email,password:pass });
+  async getTemporaryToken(email: string,pass:string,roles:Role[]): Promise<{access_token: string}> {
+    return await this.getToken({ email: email,password:pass,roles:roles });
   }
 
   async token(token:string){
@@ -55,6 +56,5 @@ export class AuthService {
     } catch {
       throw new UnauthorizedException();
     }
-
   }
 }

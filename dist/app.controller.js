@@ -18,13 +18,16 @@ const config_1 = require("@nestjs/config");
 const ravendb_service_1 = require("./ravendb/ravendb.service");
 const AbstractValidationPipe_1 = require("./helpers/pipes/AbstractValidationPipe");
 const App_dto_1 = require("./repository/validate-dto/App.dto");
+const roles_decorator_1 = require("./guard/RoleGuard/roles.decorator");
+const role_enum_1 = require("./guard/RoleGuard/role.enum");
+const roles_guard_1 = require("./guard/RoleGuard/roles.guard");
 let AppController = class AppController {
     constructor(ravenService, config) {
         this.ravenService = ravenService;
         this.config = config;
     }
     async getEntities() {
-        return await this.ravenService.listDocuments();
+        return 'await this.ravenService.listDocuments();';
     }
     async createEntity(body) {
         return await this.ravenService.storeDocument(body);
@@ -33,9 +36,8 @@ let AppController = class AppController {
         return await this.ravenService.updateCollection(body.databaseName, body.entityName, body.entityValue);
     }
     getConfig() {
-        const environment = this.config.get('environment');
-        const names = this.config.get('names');
-        return { environment, names };
+        const server = this.config.get('server', 'Not found');
+        return { server };
     }
 };
 exports.AppController = AppController;
@@ -65,12 +67,15 @@ __decorate([
 ], AppController.prototype, "updateCollection", null);
 __decorate([
     (0, common_1.Get)('config'),
+    (0, roles_decorator_1.Roles)(role_enum_1.Role.Admin),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Object)
 ], AppController.prototype, "getConfig", null);
 exports.AppController = AppController = __decorate([
     (0, common_1.Controller)('app'),
+    (0, roles_decorator_1.Roles)(role_enum_1.Role.Admin),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     __metadata("design:paramtypes", [ravendb_service_1.RavendbService,
         config_1.ConfigService])
 ], AppController);

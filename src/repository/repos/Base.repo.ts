@@ -3,7 +3,15 @@ import DocumentStore, { IDocumentSession, ObjectTypeDescriptor } from "ravendb";
 import { addProperty } from "../../helpers/addProperty";
 import { AttachmentsTypeException, BadReqTypeException, IdNotFoundException } from "../../exception/ClientException";
 
+/**
+ * Сущность репозитория включающая в себя базовые методы для доступа к БД
+ */
 export class BaseRepo<TEntity extends BaseEntity> {
+  /**
+   * Удаляет мета файлы и __PROJECTED_NESTED_OBJECT_TYPES__
+   * @param obj созданная базовая сущность
+   * @protected
+   */
   protected metadataRemove(obj: TEntity): TEntity | null {
     if (!obj) {
       return null;
@@ -31,12 +39,13 @@ export class BaseRepo<TEntity extends BaseEntity> {
   }
 
   /**
-   * Проверяет переданные поля у объектов на undefined и устанавливает их на null
-   * @param body TEntity который extends BaseEntity
+   * Проверяет переданные поля у объектов на их наличие
+   * и устанавливает их на null если не найденно
+   * @param body TEntity  extends BaseEntity
    * @param entity
    */
   public checkPropForUndefinedAndSetNull(
-    body: TEntity, ...entity: string[]): TEntity {
+    body: TEntity, ...entity: string[]): TEntity | null {
     for (let i = 0; i < entity.length; i++) {
       body[entity[i]] = !body[entity[i]] ? null : body[entity[i]];
     }
@@ -46,7 +55,7 @@ export class BaseRepo<TEntity extends BaseEntity> {
   /**
    * Свойтво lastUpdate обновляет время на текущее
    */
-  public static updateEntityDate(entity: BaseEntity) {
+  public  updateEntityDate(entity: TEntity) {
     entity.lastUpdate = new Date().toLocaleString();
   }
 
@@ -67,7 +76,7 @@ export class BaseRepo<TEntity extends BaseEntity> {
   public async updateDocument(entity: TEntity, id: string): Promise<TEntity> {
     const [result, session] = await this.openSesAndLoadDocById(id);
     if (result) {
-      BaseRepo.updateEntityDate(result);
+      this.updateEntityDate(result);
       Object.assign(result, entity);
     }
     await session.saveChanges();
@@ -86,7 +95,7 @@ export class BaseRepo<TEntity extends BaseEntity> {
     };
     body = addProperty(body, addExtraProperty);
     body.dateOfCreation = new Date().toLocaleString();
-    BaseRepo.updateEntityDate(body);
+    this.updateEntityDate(body);
     // создание новой сущности в бд. id создается в БД сам
     await session.store(body, undefined);
     await session.saveChanges();
@@ -98,6 +107,7 @@ export class BaseRepo<TEntity extends BaseEntity> {
    * Get document by id in db
    */
   protected async getById(id: string): Promise<TEntity> {
+
     const [result, session] = await this.openSesAndLoadDocById(id);
     session.dispose();
     if (!result) {
@@ -160,11 +170,9 @@ export class BaseRepo<TEntity extends BaseEntity> {
     if (isFindTrack.data) {
       const fileName = `${documentId}.${this.combineFormatAndFilename(file.originalname)}`;
       const checkAttachments = await session.advanced.attachments.exists(documentId, fileName);
-
-      console.log(test)
       //  Проверка наличие вложений у документа
       if (!checkAttachments) {
-        await session.advanced.attachments.store(documentId, fileName, file.buffer ,'ff');
+        await session.advanced.attachments.store(documentId, fileName, file.buffer );
       } else {
         throw new AttachmentsTypeException();
       }

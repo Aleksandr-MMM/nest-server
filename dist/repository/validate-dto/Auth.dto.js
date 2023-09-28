@@ -9,21 +9,17 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UsersDto = exports.UsersRegistrationDto = void 0;
-const users_entity_1 = require("../entities/users.entity");
+exports.UsersDto = void 0;
 const class_validator_1 = require("class-validator");
-class UsersRegistrationDto extends users_entity_1.UsersEntity {
+class UsersDto {
 }
-exports.UsersRegistrationDto = UsersRegistrationDto;
+exports.UsersDto = UsersDto;
 __decorate([
     (0, class_validator_1.IsDefined)(),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsEmail)(),
     __metadata("design:type", String)
-], UsersRegistrationDto.prototype, "email", void 0);
-class UsersDto extends UsersRegistrationDto {
-}
-exports.UsersDto = UsersDto;
+], UsersDto.prototype, "email", void 0);
 __decorate([
     (0, class_validator_1.IsDefined)(),
     (0, class_validator_1.IsString)(),

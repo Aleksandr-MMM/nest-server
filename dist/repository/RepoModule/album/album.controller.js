@@ -20,9 +20,11 @@ const Album_repo_1 = require("../../repos/Album.repo");
 const index_1 = require("../../index");
 const Album_dto_1 = require("../../validate-dto/Album.dto");
 const AbstractValidationPipe_1 = require("../../../helpers/pipes/AbstractValidationPipe");
-const auth_guard_1 = require("../../../guard/auth.guard");
 const users_repo_1 = require("../../repos/users.repo.");
 const users_entity_1 = require("../../entities/users.entity");
+const roles_decorator_1 = require("../../../guard/RoleGuard/roles.decorator");
+const role_enum_1 = require("../../../guard/RoleGuard/role.enum");
+const roles_guard_1 = require("../../../guard/RoleGuard/roles.guard");
 let AlbumController = class AlbumController extends (0, BaseFactory_controller_1.FactoryCRUDController)(album_entity_1.AlbumEntity, Album_repo_1.AlbumRepo) {
     constructor(persistence) {
         super(persistence);
@@ -46,7 +48,6 @@ let AlbumController = class AlbumController extends (0, BaseFactory_controller_1
 exports.AlbumController = AlbumController;
 __decorate([
     (0, common_1.Post)(),
-    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
     (0, common_1.UsePipes)(new AbstractValidationPipe_1.AbstractValidationPipe({ whitelist: true,
         forbidNonWhitelisted: true }, {
         body: Album_dto_1.AlbumPostDto
@@ -59,7 +60,6 @@ __decorate([
 ], AlbumController.prototype, "createDocument", null);
 __decorate([
     (0, common_1.Put)("/track/:id"),
-    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
     (0, common_1.UsePipes)(new AbstractValidationPipe_1.AbstractValidationPipe({ whitelist: true,
         forbidNonWhitelisted: true }, { body: Album_dto_1.AlbumPutDto })),
     __param(0, (0, common_1.Param)("id")),
@@ -70,7 +70,6 @@ __decorate([
 ], AlbumController.prototype, "pushTrackInDocument", null);
 __decorate([
     (0, common_1.Delete)("/track/:id"),
-    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
     (0, common_1.UsePipes)(new AbstractValidationPipe_1.AbstractValidationPipe({ whitelist: true,
         forbidNonWhitelisted: true }, { body: Album_dto_1.AlbumPutDto })),
     __param(0, (0, common_1.Param)("id")),
@@ -81,6 +80,8 @@ __decorate([
 ], AlbumController.prototype, "delTrackInDocument", null);
 exports.AlbumController = AlbumController = __decorate([
     (0, common_1.Controller)("/album"),
+    (0, roles_decorator_1.Roles)(role_enum_1.Role.User),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     __metadata("design:paramtypes", [index_1.PersistenceService])
 ], AlbumController);
 //# sourceMappingURL=album.controller.js.map

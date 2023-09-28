@@ -17,7 +17,7 @@ exports.GlobalThrottlerModule = GlobalThrottlerModule = __decorate([
     (0, common_1.Module)({
         imports: [
             throttler_1.ThrottlerModule.forRoot([{
-                    ttl: 3,
+                    ttl: 300,
                     limit: 10
                 }])
         ], providers: [{

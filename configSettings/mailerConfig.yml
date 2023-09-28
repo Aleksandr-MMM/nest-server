@@ -1,0 +1,5 @@
+host: 'smtp.mail.ru'
+port: 465
+secure: true
+user: 'virus_2010-2009@mail.ru'
+pass: 'HKNLwAsXvzbWpXX80gUS'

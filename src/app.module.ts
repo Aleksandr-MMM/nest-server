@@ -9,11 +9,18 @@ import { NestMailerModule } from "./globalModule/nestMailerModule/NestMailer.mod
 import { GlobalThrottlerModule } from "./globalModule/throttlerModule/tthrottler.module";
 
 @Module({
-  imports: [AppConfigModule, PersistenceModule, AllRepoModules, AuthModule,
-    NestMailerModule, GlobalThrottlerModule
+  imports: [
+    AppConfigModule, PersistenceModule, AllRepoModules, AuthModule,
+    NestMailerModule, GlobalThrottlerModule,
   ],
   controllers: [AppController],
-  providers: [RavendbService]
+  providers: [
+    RavendbService,
+    // {
+    //   provide: APP_GUARD,
+    //   useClass: RolesGuard
+    // }
+    ]
 })
 export class AppModule {
 }

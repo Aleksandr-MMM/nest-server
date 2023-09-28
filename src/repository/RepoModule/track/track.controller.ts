@@ -11,11 +11,13 @@ import { TrackDto } from "../../validate-dto/Track.dto";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { validateFilePipes } from "../../../helpers/pipes/ValidateFilePipes";
 import { AbstractValidationPipe } from "../../../helpers/pipes/AbstractValidationPipe";
-import { AuthGuard } from "../../../guard/auth.guard";
-import { Throttle } from "@nestjs/throttler";
-
+import { Roles } from "../../../guard/RoleGuard/roles.decorator";
+import { Role } from "../../../guard/RoleGuard/role.enum";
+import { RolesGuard } from "../../../guard/RoleGuard/roles.guard";
 
 @Controller("/track")
+@Roles(Role.User)
+@UseGuards(RolesGuard)
 export class TrackController extends FactoryCRUDController<TrackEntity, TrackRepo, TrackDto>
 (TrackEntity, TrackRepo, {
   postOptions: {
@@ -32,7 +34,6 @@ export class TrackController extends FactoryCRUDController<TrackEntity, TrackRep
   }
 
   @Post()
-  @UseGuards(AuthGuard)
   @UseInterceptors(FileInterceptor("music", { storage: null }))
   @UsePipes(new AbstractValidationPipe({
     whitelist: true,

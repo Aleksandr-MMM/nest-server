@@ -17,10 +17,12 @@ const common_1 = require("@nestjs/common");
 const index_1 = require("../../index");
 const users_repo_1 = require("../../repos/users.repo.");
 const users_entity_1 = require("../../entities/users.entity");
-const auth_guard_1 = require("../../../guard/auth.guard");
 const ClientException_1 = require("../../../exception/ClientException");
 const platform_express_1 = require("@nestjs/platform-express");
 const ValidateFilePipes_1 = require("../../../helpers/pipes/ValidateFilePipes");
+const roles_decorator_1 = require("../../../guard/RoleGuard/roles.decorator");
+const role_enum_1 = require("../../../guard/RoleGuard/role.enum");
+const roles_guard_1 = require("../../../guard/RoleGuard/roles.guard");
 let UsersController = class UsersController {
     constructor(persistence) {
         this.persistence = persistence;
@@ -58,7 +60,6 @@ let UsersController = class UsersController {
 exports.UsersController = UsersController;
 __decorate([
     (0, common_1.Put)("/subscribe/:id"),
-    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Param)("id")),
     __metadata("design:type", Function),
@@ -67,7 +68,6 @@ __decorate([
 ], UsersController.prototype, "subscribeUser", null);
 __decorate([
     (0, common_1.Delete)("/unSubscribe/:id"),
-    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Param)("id")),
     __metadata("design:type", Function),
@@ -76,7 +76,6 @@ __decorate([
 ], UsersController.prototype, "unSubscribeUser", null);
 __decorate([
     (0, common_1.Put)("/addFriend/:id"),
-    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Param)("id")),
     __metadata("design:type", Function),
@@ -85,7 +84,6 @@ __decorate([
 ], UsersController.prototype, "addFriend", null);
 __decorate([
     (0, common_1.Delete)("/unFriend/:id"),
-    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Param)("id")),
     __metadata("design:type", Function),
@@ -94,7 +92,6 @@ __decorate([
 ], UsersController.prototype, "unFriend", null);
 __decorate([
     (0, common_1.Post)("/addPhoto"),
-    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
     (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)("photo", { storage: null })),
     __param(0, (0, common_1.UploadedFile)((0, ValidateFilePipes_1.validateFilePipes)(/(jpeg)$/, 5))),
     __param(1, (0, common_1.Req)()),
@@ -112,6 +109,8 @@ __decorate([
 ], UsersController.prototype, "getPhoto", null);
 exports.UsersController = UsersController = __decorate([
     (0, common_1.Controller)("/user"),
+    (0, roles_decorator_1.Roles)(role_enum_1.Role.User),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     __metadata("design:paramtypes", [index_1.PersistenceService])
 ], UsersController);
 //# sourceMappingURL=users.controller.js.map

@@ -1,0 +1,5 @@
+raven:
+  database: 'MusicProduct'
+  url: 'https://a.free.mmmalexmmm.ravendb.cloud'
+  certificate: './certificate/certificateForNest.pfx'
+  passphrase: 'teat787891'

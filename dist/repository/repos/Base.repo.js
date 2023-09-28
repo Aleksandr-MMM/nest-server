@@ -27,7 +27,7 @@ class BaseRepo {
         }
         return body;
     }
-    static updateEntityDate(entity) {
+    updateEntityDate(entity) {
         entity.lastUpdate = new Date().toLocaleString();
     }
     async openSesAndLoadDocById(id) {
@@ -40,7 +40,7 @@ class BaseRepo {
     async updateDocument(entity, id) {
         const [result, session] = await this.openSesAndLoadDocById(id);
         if (result) {
-            BaseRepo.updateEntityDate(result);
+            this.updateEntityDate(result);
             Object.assign(result, entity);
         }
         await session.saveChanges();
@@ -55,7 +55,7 @@ class BaseRepo {
         };
         body = (0, addProperty_1.addProperty)(body, addExtraProperty);
         body.dateOfCreation = new Date().toLocaleString();
-        BaseRepo.updateEntityDate(body);
+        this.updateEntityDate(body);
         await session.store(body, undefined);
         await session.saveChanges();
         session.dispose();
@@ -107,9 +107,8 @@ class BaseRepo {
         if (isFindTrack.data) {
             const fileName = `${documentId}.${this.combineFormatAndFilename(file.originalname)}`;
             const checkAttachments = await session.advanced.attachments.exists(documentId, fileName);
-            console.log(test);
             if (!checkAttachments) {
-                await session.advanced.attachments.store(documentId, fileName, file.buffer, 'ff');
+                await session.advanced.attachments.store(documentId, fileName, file.buffer);
             }
             else {
                 throw new ClientException_1.AttachmentsTypeException();

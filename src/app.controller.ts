@@ -1,10 +1,15 @@
-import { Body, Controller, Get, Post, Put, UsePipes } from "@nestjs/common";
+import { Body, Controller, Get, Post, Put, UseGuards, UsePipes } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { RavendbService } from "./ravendb/ravendb.service";
 import { AbstractValidationPipe } from "./helpers/pipes/AbstractValidationPipe";
 import { AppDto } from "./repository/validate-dto/App.dto";
+import { Roles } from "./guard/RoleGuard/roles.decorator";
+import { Role } from "./guard/RoleGuard/role.enum";
+import { RolesGuard } from "./guard/RoleGuard/roles.guard";
 
 @Controller('app')
+@Roles(Role.Admin)
+@UseGuards(RolesGuard)
 export class AppController {
   constructor(
     private readonly ravenService: RavendbService,
@@ -16,8 +21,8 @@ export class AppController {
    * Get all entities
    */
   @Get('entities')
-  async getEntities(): Promise<object> {
-    return await this.ravenService.listDocuments();
+  async getEntities(): Promise<string> {
+    return 'await this.ravenService.listDocuments();'
   }
 
   /**
@@ -41,13 +46,12 @@ export class AppController {
   }
 
   /**
-   * Get Current config
+   * Get Current configSettings
    */
   @Get('config')
+  @Roles(Role.Admin)
   getConfig():object {
-    const environment = this.config.get<string>('environment');
-    const names = this.config.get<string[]>('names');
-
-    return { environment, names };
+    const server = this.config.get<string>('server','Not found');
+    return { server };
   }
 }

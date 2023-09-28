@@ -1,7 +1,8 @@
 import { JwtService } from "@nestjs/jwt";
+import { Role } from "../guard/RoleGuard/role.enum";
 export declare class AuthService {
     private jwtService;
-    protected payloadRemove(obj: any): {
+    protected returnMailAndId(obj: any): {
         email: any;
         id: any;
     };
@@ -13,8 +14,8 @@ export declare class AuthService {
         email: any;
         id: any;
     };
-    signIn(email: string, id: string): Promise<any>;
-    getTemporaryToken(email: string, pass: string): Promise<{
+    signIn(email: string, id: string, roles: Role[]): Promise<any>;
+    getTemporaryToken(email: string, pass: string, roles: Role[]): Promise<{
         access_token: string;
     }>;
     token(token: string): Promise<any>;

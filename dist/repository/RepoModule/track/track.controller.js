@@ -20,7 +20,9 @@ const Track_dto_1 = require("../../validate-dto/Track.dto");
 const platform_express_1 = require("@nestjs/platform-express");
 const ValidateFilePipes_1 = require("../../../helpers/pipes/ValidateFilePipes");
 const AbstractValidationPipe_1 = require("../../../helpers/pipes/AbstractValidationPipe");
-const auth_guard_1 = require("../../../guard/auth.guard");
+const roles_decorator_1 = require("../../../guard/RoleGuard/roles.decorator");
+const role_enum_1 = require("../../../guard/RoleGuard/role.enum");
+const roles_guard_1 = require("../../../guard/RoleGuard/roles.guard");
 let TrackController = class TrackController extends (0, BaseFactory_controller_1.FactoryCRUDController)(index_1.TrackEntity, index_1.TrackRepo, {
     postOptions: {
         DTO: Track_dto_1.TrackDto
@@ -42,7 +44,6 @@ let TrackController = class TrackController extends (0, BaseFactory_controller_1
 exports.TrackController = TrackController;
 __decorate([
     (0, common_1.Post)(),
-    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
     (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)("music", { storage: null })),
     (0, common_1.UsePipes)(new AbstractValidationPipe_1.AbstractValidationPipe({
         whitelist: true,
@@ -59,6 +60,8 @@ __decorate([
 ], TrackController.prototype, "uploadFile", null);
 exports.TrackController = TrackController = __decorate([
     (0, common_1.Controller)("/track"),
+    (0, roles_decorator_1.Roles)(role_enum_1.Role.User),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     __metadata("design:paramtypes", [index_1.PersistenceService])
 ], TrackController);
 //# sourceMappingURL=track.controller.js.map

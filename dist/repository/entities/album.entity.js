@@ -6,9 +6,6 @@ class AlbumEntity extends base_entity_1.BaseEntity {
     get collectionName() {
         return "album";
     }
-    constructor() {
-        super();
-    }
 }
 exports.AlbumEntity = AlbumEntity;
 //# sourceMappingURL=album.entity.js.map

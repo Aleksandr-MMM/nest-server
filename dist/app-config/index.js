@@ -9,7 +9,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppConfigModule = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
-const configuration_1 = require("./configuration");
+const dbConfig_1 = require("./config/dbConfig");
+const mailerConfig_1 = require("./config/mailerConfig");
+const serverConfig_1 = require("./config/serverConfig");
 let AppConfigModule = class AppConfigModule {
 };
 exports.AppConfigModule = AppConfigModule;
@@ -18,11 +20,16 @@ exports.AppConfigModule = AppConfigModule = __decorate([
         imports: [
             config_1.ConfigModule.forRoot({
                 ignoreEnvFile: false,
-                load: [configuration_1.default],
+                load: [
+                    dbConfig_1.default,
+                    mailerConfig_1.default,
+                    serverConfig_1.default
+                ],
                 isGlobal: true,
-            }),
+                cache: true
+            })
         ],
-        exports: [],
+        exports: []
     })
 ], AppConfigModule);
 //# sourceMappingURL=index.js.map

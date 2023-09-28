@@ -14,7 +14,7 @@ const common_1 = require("@nestjs/common");
 const jwt_1 = require("@nestjs/jwt");
 const constants_1 = require("./constants");
 let AuthService = class AuthService {
-    payloadRemove(obj) {
+    returnMailAndId(obj) {
         return { email: obj === null || obj === void 0 ? void 0 : obj.email, id: obj === null || obj === void 0 ? void 0 : obj.id };
     }
     ;
@@ -28,13 +28,13 @@ let AuthService = class AuthService {
         };
     }
     identificationMe(user) {
-        return this.payloadRemove(user);
+        return this.returnMailAndId(user);
     }
-    async signIn(email, id) {
-        return await this.getToken({ email: email, id: id });
+    async signIn(email, id, roles) {
+        return await this.getToken({ email: email, id: id, roles: roles });
     }
-    async getTemporaryToken(email, pass) {
-        return await this.getToken({ email: email, password: pass });
+    async getTemporaryToken(email, pass, roles) {
+        return await this.getToken({ email: email, password: pass, roles: roles });
     }
     async token(token) {
         try {

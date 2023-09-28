@@ -8,8 +8,13 @@ import { AbstractValidationPipe } from "../../../helpers/pipes/AbstractValidatio
 import { AuthGuard } from "../../../guard/auth.guard";
 import { UsersRepo } from "../../repos/users.repo.";
 import { UsersEntity } from "../../entities/users.entity";
+import { Roles } from "../../../guard/RoleGuard/roles.decorator";
+import { Role } from "../../../guard/RoleGuard/role.enum";
+import { RolesGuard } from "../../../guard/RoleGuard/roles.guard";
 
 @Controller("/album")
+@Roles(Role.User)
+@UseGuards(RolesGuard)
 export class AlbumController extends FactoryCRUDController<AlbumEntity,
   AlbumRepo, AlbumPostDto, AlbumPutDto>(AlbumEntity,AlbumRepo) {
 
@@ -23,7 +28,6 @@ export class AlbumController extends FactoryCRUDController<AlbumEntity,
     this.albumRepository = persistence.getCurrentRepository(AlbumEntity,AlbumRepo)
   }
   @Post()
-  @UseGuards(AuthGuard)
   @UsePipes(new AbstractValidationPipe({ whitelist: true,
     forbidNonWhitelisted: true }, {
     body: AlbumPostDto}))
@@ -37,7 +41,6 @@ export class AlbumController extends FactoryCRUDController<AlbumEntity,
 * Push track in trackList
  */
   @Put("/track/:id")
-  @UseGuards(AuthGuard)
   @UsePipes(new AbstractValidationPipe({ whitelist: true,
     forbidNonWhitelisted: true }, { body: AlbumPutDto }))
   async pushTrackInDocument(
@@ -49,7 +52,6 @@ export class AlbumController extends FactoryCRUDController<AlbumEntity,
 * Delete track in trackList
  */
   @Delete("/track/:id")
-  @UseGuards(AuthGuard)
   @UsePipes(new AbstractValidationPipe({ whitelist: true,
     forbidNonWhitelisted: true }, { body: AlbumPutDto }))
   async delTrackInDocument(

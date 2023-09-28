@@ -21,11 +21,14 @@ let AppModule = class AppModule {
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
-        imports: [app_config_1.AppConfigModule, repository_1.PersistenceModule, AllRepoModules_1.AllRepoModules, auth_module_1.AuthModule,
-            NestMailer_module_1.NestMailerModule, tthrottler_module_1.GlobalThrottlerModule
+        imports: [
+            app_config_1.AppConfigModule, repository_1.PersistenceModule, AllRepoModules_1.AllRepoModules, auth_module_1.AuthModule,
+            NestMailer_module_1.NestMailerModule, tthrottler_module_1.GlobalThrottlerModule,
         ],
         controllers: [app_controller_1.AppController],
-        providers: [ravendb_service_1.RavendbService]
+        providers: [
+            ravendb_service_1.RavendbService,
+        ]
     })
 ], AppModule);
 //# sourceMappingURL=app.module.js.map
