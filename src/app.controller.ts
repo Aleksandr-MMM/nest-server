@@ -16,7 +16,6 @@ export class AppController {
     private readonly config: ConfigService,
   ) {
   }
-
   /**
    * Get all entities
    */
