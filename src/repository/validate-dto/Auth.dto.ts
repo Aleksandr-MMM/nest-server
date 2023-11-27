@@ -1,12 +1,16 @@
-import { IsDefined, IsEmail, IsString } from "class-validator";
+import { IsDefined, IsEmail, IsString, Matches } from "class-validator";
 
-export class UsersDto  {
+export class UsersDto {
   @IsDefined()
   @IsString()
   @IsEmail()
   public email: string;
   @IsDefined()
   @IsString()
-  public password: string ;
+  @Matches(/((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*\W))/, {
+    message: "Пароль должен состоять как минимум из:латинских символов,строчной ,прописной буквы," +
+      "цифры [0-9] и специального символа."
+  })
+  public password: string;
 }
 

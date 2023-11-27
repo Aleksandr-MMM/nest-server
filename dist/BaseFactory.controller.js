@@ -16,7 +16,9 @@ exports.FactoryCRUDController = void 0;
 const repository_1 = require("./repository");
 const common_1 = require("@nestjs/common");
 const AbstractValidationPipe_1 = require("./helpers/pipes/AbstractValidationPipe");
-const auth_guard_1 = require("./guard/auth.guard");
+const roles_guard_1 = require("./guard/RoleGuard/roles.guard");
+const roles_decorator_1 = require("./guard/RoleGuard/roles.decorator");
+const role_enum_1 = require("./guard/RoleGuard/role.enum");
 function FactoryCRUDController(entity, repo, options) {
     var _a, _b;
     let BaseCRUDController = class BaseCRUDController {
@@ -35,7 +37,6 @@ function FactoryCRUDController(entity, repo, options) {
         }
         async createDocument(body) {
             var _a;
-            console.log('test2');
             return await this.currentRepository.storeDocument(body, (_a = options === null || options === void 0 ? void 0 : options.postOptions) === null || _a === void 0 ? void 0 : _a.addProperty);
         }
         async updateDocument(id, body) {
@@ -67,9 +68,10 @@ function FactoryCRUDController(entity, repo, options) {
     ], BaseCRUDController.prototype, "getDocumentById", null);
     __decorate([
         (0, common_1.Post)(),
-        (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
-        (0, common_1.UsePipes)(new AbstractValidationPipe_1.AbstractValidationPipe({ whitelist: true,
-            forbidNonWhitelisted: true }, {
+        (0, common_1.UsePipes)(new AbstractValidationPipe_1.AbstractValidationPipe({
+            whitelist: true,
+            forbidNonWhitelisted: true
+        }, {
             body: (_a = options === null || options === void 0 ? void 0 : options.postOptions) === null || _a === void 0 ? void 0 : _a.DTO
         })),
         __param(0, (0, common_1.Body)()),
@@ -79,9 +81,10 @@ function FactoryCRUDController(entity, repo, options) {
     ], BaseCRUDController.prototype, "createDocument", null);
     __decorate([
         (0, common_1.Put)(":id"),
-        (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
-        (0, common_1.UsePipes)(new AbstractValidationPipe_1.AbstractValidationPipe({ whitelist: true,
-            forbidNonWhitelisted: true }, { body: (_b = options === null || options === void 0 ? void 0 : options.putOptions) === null || _b === void 0 ? void 0 : _b.DTO })),
+        (0, common_1.UsePipes)(new AbstractValidationPipe_1.AbstractValidationPipe({
+            whitelist: true,
+            forbidNonWhitelisted: true
+        }, { body: (_b = options === null || options === void 0 ? void 0 : options.putOptions) === null || _b === void 0 ? void 0 : _b.DTO })),
         __param(0, (0, common_1.Param)("id")),
         __param(1, (0, common_1.Body)()),
         __metadata("design:type", Function),
@@ -90,13 +93,14 @@ function FactoryCRUDController(entity, repo, options) {
     ], BaseCRUDController.prototype, "updateDocument", null);
     __decorate([
         (0, common_1.Delete)(":id"),
-        (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
         __param(0, (0, common_1.Param)("id")),
         __metadata("design:type", Function),
         __metadata("design:paramtypes", [String]),
         __metadata("design:returntype", Promise)
     ], BaseCRUDController.prototype, "deleteById", null);
     BaseCRUDController = __decorate([
+        (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
+        (0, roles_decorator_1.Roles)(role_enum_1.Role.User),
         (0, common_1.Controller)(),
         __metadata("design:paramtypes", [repository_1.PersistenceService])
     ], BaseCRUDController);

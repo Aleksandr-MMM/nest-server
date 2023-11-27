@@ -5,21 +5,21 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
+var TransformInterceptor_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TransformInterceptor = void 0;
 const common_1 = require("@nestjs/common");
-const operators_1 = require("rxjs/operators");
-let TransformInterceptor = class TransformInterceptor {
+const ExcludeInterceptor_1 = require("./ExcludeInterceptor");
+let TransformInterceptor = TransformInterceptor_1 = class TransformInterceptor extends ExcludeInterceptor_1.ExcludeInterceptor {
     intercept(context, next) {
-        return next
-            .handle()
-            .pipe((0, operators_1.map)(data => ({ data,
+        return TransformInterceptor_1.isExcludePaths(context.switchToHttp().getRequest().route.path, next, {
             statusCode: common_1.HttpStatus.OK,
-            error: null })));
+            error: null
+        });
     }
 };
 exports.TransformInterceptor = TransformInterceptor;
-exports.TransformInterceptor = TransformInterceptor = __decorate([
+exports.TransformInterceptor = TransformInterceptor = TransformInterceptor_1 = __decorate([
     (0, common_1.Injectable)()
 ], TransformInterceptor);
 //# sourceMappingURL=transform.interceptor.js.map

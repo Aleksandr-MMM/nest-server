@@ -34,7 +34,7 @@ export class AuthService {
   /**
    * Возвращает зашифрованый токен(email,id) пользователя
    */
-  async signIn(email: string, id: string,roles:Role[]): Promise<any> {
+  async signIn(email: string, id: string,roles:Role[]): Promise<{access_token: string}> {
     return await this.getToken({ email: email,id:id,roles:roles });
   }
 

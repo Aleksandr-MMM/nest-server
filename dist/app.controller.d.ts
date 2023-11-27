@@ -1,5 +1,5 @@
 import { ConfigService } from "@nestjs/config";
-import { RavendbService } from "./ravendb/ravendb.service";
+import { RavendbService } from "./repository/services/ravendb/ravendb.service";
 import { AppDto } from "./repository/validate-dto/App.dto";
 export declare class AppController {
     private readonly ravenService;

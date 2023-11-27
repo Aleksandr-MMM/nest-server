@@ -27,30 +27,46 @@ let UsersRepo = class UsersRepo extends Base_repo_1.BaseRepo {
         delete conv["protected"];
         return conv;
     }
-    async _findUserByEmail(email) {
-        if (!this.users) {
-            this.users = await this.retrieveDocuments();
+    deleteUserEmail(user) {
+        if (!user) {
+            return null;
         }
-        return this.users.find(user => user.email === email);
+        delete user["email"];
+        return user;
+    }
+    deleteUsersEmailAndProtectedInfo(users) {
+        if (!users) {
+            return null;
+        }
+        users.forEach(user => {
+            this.removeProtectedInfo(user);
+            this.deleteUserEmail(user);
+        });
+        return users;
+    }
+    deleteEmailAndProtectedInfo(user) {
+        if (!user) {
+            return null;
+        }
+        return this.removeProtectedInfo(this.deleteUserEmail(user));
+    }
+    async _findUserByEmail(email) {
+        return (await this.retrieveDocuments()).find(user => user.email === email);
     }
     async createNewUser(email, password, roles) {
-        if (!this.users) {
-            this.users = await this.retrieveDocuments();
-        }
         let result = {};
-        if (this.users.find(user => user.email === email) === undefined) {
+        if ((await this.retrieveDocuments()).find(user => user.email === email) === undefined) {
             result.email = email;
             result.subscribe = [];
             result.friends = [];
             result.status = null;
-            result.nikName = "Новый пользователь";
+            result.nickName = "Новый пользователь";
             result.albumList = [];
             result.protected = {
                 roles: roles,
-                password: password,
+                password: password
             };
             result = await this.storeDocument(result);
-            this.users.push(result);
             return this.removeProtectedInfo(result);
         }
         else {
@@ -80,16 +96,19 @@ let UsersRepo = class UsersRepo extends Base_repo_1.BaseRepo {
     async subscribeUser(myId, userId) {
         var _a, _b, _c;
         const [result, session] = await this.openSesAndLoadDocById(userId);
-        if (((_a = result[this.PROPERTY_USER_FRIENDS]) === null || _a === void 0 ? void 0 : _a.find(findId => myId === findId))
-            || ((_b = result[this.PROPERTY_USER_SUBSCRIBE]) === null || _b === void 0 ? void 0 : _b.find(findId => myId === findId))) {
-            throw new ClientException_1.BadReqTypeException(this.ERROR_FRIEND_EXIST_TEXT);
+        if (!!result) {
+            if (((_a = result[this.PROPERTY_USER_FRIENDS]) === null || _a === void 0 ? void 0 : _a.find(findId => myId === findId))
+                || ((_b = result[this.PROPERTY_USER_SUBSCRIBE]) === null || _b === void 0 ? void 0 : _b.find(findId => myId === findId))) {
+                throw new ClientException_1.BadReqTypeException(this.ERROR_FRIEND_EXIST_TEXT);
+            }
+            else {
+                (_c = result[this.PROPERTY_USER_SUBSCRIBE]) === null || _c === void 0 ? void 0 : _c.push(myId);
+                await session.saveChanges();
+            }
+            session.dispose();
+            return result.subscribe;
         }
-        else {
-            (_c = result[this.PROPERTY_USER_SUBSCRIBE]) === null || _c === void 0 ? void 0 : _c.push(myId);
-            await session.saveChanges();
-        }
-        session.dispose();
-        return result.subscribe;
+        throw new ClientException_1.BadReqTypeException("incorrect id");
     }
     async unSubscribeUser(myId, userId) {
         const [result, session] = await this.openSesAndLoadDocById(myId);
@@ -136,6 +155,13 @@ let UsersRepo = class UsersRepo extends Base_repo_1.BaseRepo {
             session.dispose();
         }
         return myProfile.friends;
+    }
+    async updateProfile(myId, newProperty) {
+        let [myProfile, session] = await this.openSesAndLoadDocById(myId);
+        Object.assign(myProfile, newProperty);
+        await session.saveChanges();
+        session.dispose();
+        return this.removeProtectedInfo(this.metadataRemove(myProfile));
     }
 };
 exports.UsersRepo = UsersRepo;

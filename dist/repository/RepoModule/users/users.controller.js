@@ -23,10 +23,23 @@ const ValidateFilePipes_1 = require("../../../helpers/pipes/ValidateFilePipes");
 const roles_decorator_1 = require("../../../guard/RoleGuard/roles.decorator");
 const role_enum_1 = require("../../../guard/RoleGuard/role.enum");
 const roles_guard_1 = require("../../../guard/RoleGuard/roles.guard");
+const AbstractValidationPipe_1 = require("../../../helpers/pipes/AbstractValidationPipe");
+const Users_dto_1 = require("../../validate-dto/Users.dto");
 let UsersController = class UsersController {
     constructor(persistence) {
         this.persistence = persistence;
         this.currentRepository = persistence.getCurrentRepository(users_entity_1.UsersEntity, users_repo_1.UsersRepo);
+    }
+    async getPhoto(userId, res) {
+        return this.currentRepository.getAttachment(userId, "jpg", res);
+    }
+    async getUsers() {
+        const users = await this.currentRepository.retrieveDocuments();
+        return this.currentRepository.deleteUsersEmailAndProtectedInfo(users);
+    }
+    async getUserById(id) {
+        const foundUser = await this.currentRepository.getById(id);
+        return this.currentRepository.deleteEmailAndProtectedInfo(foundUser);
     }
     async subscribeUser(req, userId) {
         if (await this.currentRepository.documentExists(userId)) {
@@ -36,9 +49,6 @@ let UsersController = class UsersController {
             throw new ClientException_1.IdNotFoundException();
         }
     }
-    async unSubscribeUser(req, userId) {
-        return this.currentRepository.unSubscribeUser(req.user.id, userId);
-    }
     async addFriend(req, userId) {
         if (await this.currentRepository.documentExists(userId)) {
             return this.currentRepository.addFriendList(req.user.id, userId);
@@ -47,17 +57,42 @@ let UsersController = class UsersController {
             throw new ClientException_1.IdNotFoundException();
         }
     }
+    async putUserProperty(body, req) {
+        const updatedUser = await this.currentRepository.updateProfile(req.user.id, body);
+        return this.currentRepository.deleteEmailAndProtectedInfo(updatedUser);
+    }
+    async unSubscribeUser(req, userId) {
+        return this.currentRepository.unSubscribeUser(req.user.id, userId);
+    }
     async unFriend(req, userId) {
         return this.currentRepository.unFriend(req.user.id, userId);
     }
     async addPhoto(file, req, userId) {
         return this.currentRepository.addAttachment(req.user.id, file);
     }
-    async getPhoto(userId) {
-        return this.currentRepository.getAttachment(userId, "jpeg");
-    }
 };
 exports.UsersController = UsersController;
+__decorate([
+    (0, common_1.Get)("/photo/:id"),
+    __param(0, (0, common_1.Param)("id")),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "getPhoto", null);
+__decorate([
+    (0, common_1.Get)(),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "getUsers", null);
+__decorate([
+    (0, common_1.Get)(":id"),
+    __param(0, (0, common_1.Param)("id")),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "getUserById", null);
 __decorate([
     (0, common_1.Put)("/subscribe/:id"),
     __param(0, (0, common_1.Req)()),
@@ -67,14 +102,6 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "subscribeUser", null);
 __decorate([
-    (0, common_1.Delete)("/unSubscribe/:id"),
-    __param(0, (0, common_1.Req)()),
-    __param(1, (0, common_1.Param)("id")),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String]),
-    __metadata("design:returntype", Promise)
-], UsersController.prototype, "unSubscribeUser", null);
-__decorate([
     (0, common_1.Put)("/addFriend/:id"),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Param)("id")),
@@ -82,6 +109,26 @@ __decorate([
     __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "addFriend", null);
+__decorate([
+    (0, common_1.Put)("/updateProperty"),
+    (0, common_1.UsePipes)(new AbstractValidationPipe_1.AbstractValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true
+    }, { body: Users_dto_1.UsersDto })),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Users_dto_1.UsersDto, Object]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "putUserProperty", null);
+__decorate([
+    (0, common_1.Delete)("/unSubscribe/:id"),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)("id")),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "unSubscribeUser", null);
 __decorate([
     (0, common_1.Delete)("/unFriend/:id"),
     __param(0, (0, common_1.Req)()),
@@ -100,16 +147,9 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object, String]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "addPhoto", null);
-__decorate([
-    (0, common_1.Get)("/photo/:id"),
-    __param(0, (0, common_1.Param)("id")),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", Promise)
-], UsersController.prototype, "getPhoto", null);
 exports.UsersController = UsersController = __decorate([
     (0, common_1.Controller)("/user"),
-    (0, roles_decorator_1.Roles)(role_enum_1.Role.User),
+    (0, roles_decorator_1.Roles)(role_enum_1.Role.User, role_enum_1.Role.Admin),
     (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     __metadata("design:paramtypes", [index_1.PersistenceService])
 ], UsersController);

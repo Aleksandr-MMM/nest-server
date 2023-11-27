@@ -21,7 +21,7 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], AlbumPostDto.prototype, "albumName", void 0);
-class AlbumPutDto {
+class AlbumPutDto extends album_entity_1.AlbumEntity {
 }
 exports.AlbumPutDto = AlbumPutDto;
 __decorate([

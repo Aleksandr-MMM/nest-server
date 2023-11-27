@@ -20,12 +20,14 @@ const AbstractValidationPipe_1 = require("../helpers/pipes/AbstractValidationPip
 const repository_1 = require("../repository");
 const users_entity_1 = require("../repository/entities/users.entity");
 const users_repo_1 = require("../repository/repos/users.repo.");
-const auth_guard_1 = require("../guard/auth.guard");
 const mailer_1 = require("@nestjs-modules/mailer");
 const RegMailSettings_1 = require("../globalModule/nestMailerModule/registrarionMail/RegMailSettings");
 const main_1 = require("../main");
 const ClientException_1 = require("../exception/ClientException");
 const role_enum_1 = require("../guard/RoleGuard/role.enum");
+const roles_decorator_1 = require("../guard/RoleGuard/roles.decorator");
+const roles_guard_1 = require("../guard/RoleGuard/roles.guard");
+const sendHtml_1 = require("../helpers/sendHtml");
 const authUrlController = "auth";
 const confirmRegUrl = "confirmReg";
 let AuthController = class AuthController {
@@ -47,16 +49,18 @@ let AuthController = class AuthController {
     async registration(body) {
         if (!await this.currentRepository.findUserByEmail(body.email)) {
             const link = `${main_1.baseUrl}/${this.urlMail}/` + (await this.authService.getTemporaryToken(body.email, body.password, [role_enum_1.Role.User])).access_token;
-            let response = "Something wrong";
+            let data = {
+                message: "Something wrong"
+            };
             await this.mailerService
                 .sendMail((0, RegMailSettings_1.RegMailSettings)(body.email, link))
                 .then(() => {
-                response = `Email has been sent and is valid for ${this.emailTimerMin} minutes`;
+                data.message = `Email has been sent and is valid for ${this.emailTimerMin} minutes`;
             })
-                .catch((e) => {
-                console.log(e);
+                .catch(() => {
+                throw new ClientException_1.BadReqTypeException('Failed to send email. Perhaps such an email does not exist.');
             });
-            return response;
+            return data;
         }
         else {
             throw new ClientException_1.BadReqTypeException("Email already registration");
@@ -67,7 +71,8 @@ let AuthController = class AuthController {
         const newUser = { email: tokenProperty.email, password: tokenProperty.password };
         const email = await this.currentRepository.findUserByEmail(newUser.email);
         if (email === undefined) {
-            return this.currentRepository.createNewUser(newUser.email, tokenProperty.password, tokenProperty.roles);
+            const result = this.currentRepository.createNewUser(newUser.email, tokenProperty.password, tokenProperty.roles);
+            return (0, sendHtml_1.sendHtml)((await result).email);
         }
         else {
             throw new ClientException_1.BadReqTypeException("Email already registration");
@@ -77,7 +82,8 @@ let AuthController = class AuthController {
 exports.AuthController = AuthController;
 __decorate([
     (0, common_1.Get)("me"),
-    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
+    (0, roles_decorator_1.Roles)(role_enum_1.Role.User),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),

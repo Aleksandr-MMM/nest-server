@@ -13,14 +13,12 @@ export class UsersRepo extends BaseRepo<UsersEntity> {
   private readonly PROPERTY_USER_FRIENDS = "friends";
   private readonly PROPERTY_USER_SUBSCRIBE = "subscribe";
 
-  public users: UsersEntity[];
 
   /**
-   * Удаляет секретные поля
+   * Удаляет секретные поля у пользователя
    * @param userProfile профиль пользователя
    */
   protected removeProtectedInfo(userProfile: UsersEntity): UsersEntity {
-
     if (!userProfile) {
       return null;
     }
@@ -28,42 +26,74 @@ export class UsersRepo extends BaseRepo<UsersEntity> {
     delete conv["protected"];
     return conv;
   }
+
   /**
-   * Удаляет секретные поля
+   * Удаляет Email у пользователя
+   * @param user профиль пользователя
+   */
+  protected deleteUserEmail(user: UsersEntity): UsersEntity {
+    if (!user) {
+      return null;
+    }
+    delete user["email"];
+    return user;
+  }
+
+  /**
+   * Удаляет Email у всех пользователей
+   * @param users профили пользователей
+   */
+  public deleteUsersEmailAndProtectedInfo(users: UsersEntity[]): UsersEntity[] {
+    if (!users) {
+      return null;
+    }
+    users.forEach(user => {
+      this.removeProtectedInfo(user)
+      this.deleteUserEmail(user);
+    });
+    return users;
+  }
+  /**
+   * Удаляет Email и  protected свойства
+   * @param user профиль пользователя
+   */
+  public deleteEmailAndProtectedInfo(user: UsersEntity): UsersEntity {
+    if (!user) {
+      return null;
+    }
+    return this.removeProtectedInfo(this.deleteUserEmail(user));
+  }
+
+  /**
+   * Найти пользователя по email
    * @param email email пользователя
    */
-  protected async _findUserByEmail(email:string):Promise<UsersEntity|undefined>{
-    if (!this.users) {
-      this.users = await this.retrieveDocuments();
-    }
-    return this.users.find(user => user.email === email);
+  protected async _findUserByEmail(email: string): Promise<UsersEntity | undefined> {
+    return (await this.retrieveDocuments()).find(user => user.email === email);
   }
+
   /**
    * Создание нового пользователя после прохождения регистрации.
    * @param email мой  зарегестрированный email
    * @param password пароль
    * @param roles массив ролей
    */
-  public async createNewUser(email:string,password:string,roles:Role[])
-    : Promise<UsersEntity | undefined> {
-    if (!this.users) {
-      this.users = await this.retrieveDocuments();
-    }
-    let result:any={}
+  public async createNewUser(email: string, password: string, roles: Role[])
+    : Promise<UsersEntity | never> {
+    let result = {} as UsersEntity;
     // check dont use email in db
-    if (this.users.find(user => user.email === email)===undefined) {
+    if ((await this.retrieveDocuments()).find(user => user.email === email) === undefined) {
       result.email = email;
       result.subscribe = [];
       result.friends = [];
       result.status = null;
-      result.nikName = "Новый пользователь";
+      result.nickName = "Новый пользователь";
       result.albumList = [];
       result.protected = {
-        roles:roles,
-        password:password,
+        roles: roles,
+        password: password
       };
-      result=await this.storeDocument(result)
-      this.users.push(result);
+      result = await this.storeDocument(result);
       return this.removeProtectedInfo(result);
     } else {
       throw new BadReqTypeException(this.ERROR_EMAIL_USE_TEXT);
@@ -89,25 +119,27 @@ export class UsersRepo extends BaseRepo<UsersEntity> {
    * @param options необязательный параметр getRole.По умолчанию false.
    */
   public async findUserByEmailAndPass(
-    email: string, pass: string, options?:{getRole:boolean}): Promise<(string|Role[])[] | undefined> {
-    const user =await this._findUserByEmail(email)
+    email: string, pass: string, options?: { getRole: boolean })
+    : Promise<[email: string, id: string] | [email: string, id: string, Role[]]> | never {
+    const user = await this._findUserByEmail(email);
     if (user?.protected.password !== pass) {
       throw new BadReqTypeException(this.ERROR_EMAIL_PASS_TEXT);
     }
     if (options.getRole) {
       // Не удалять данные емаил и пароля
-      return [user.email,user.id,user.protected.roles]
+      return [user.email, user.id, user.protected.roles];
     }
     // Не удалять данные емаил и пароля
-    return [user.email,user.id];
+    return [user.email, user.id];
   }
+
   /**
    * Поиск пользователя в бд по емаил возвращает email в случае успеха. И undefined
    * если не найден результат.
    * @param email email для авторизации
    */
-  public async findUserByEmail(email: string): Promise<string|undefined> {
-    const user =await this._findUserByEmail(email)
+  public async findUserByEmail(email: string): Promise<string | undefined> {
+    const user = await this._findUserByEmail(email);
     // Не удалять данные емаил
     return user?.email;
   }
@@ -119,15 +151,18 @@ export class UsersRepo extends BaseRepo<UsersEntity> {
    */
   public async subscribeUser(myId: string, userId: string): Promise<string[]> {
     const [result, session] = await this.openSesAndLoadDocById(userId);
-    if (result[this.PROPERTY_USER_FRIENDS]?.find(findId => myId === findId)
-      || result[this.PROPERTY_USER_SUBSCRIBE]?.find(findId => myId === findId)) {
-      throw new BadReqTypeException(this.ERROR_FRIEND_EXIST_TEXT);
-    } else {
-      result[this.PROPERTY_USER_SUBSCRIBE]?.push(myId);
-      await session.saveChanges();
+    if (!!result) {
+      if (result[this.PROPERTY_USER_FRIENDS]?.find(findId => myId === findId)
+        || result[this.PROPERTY_USER_SUBSCRIBE]?.find(findId => myId === findId)) {
+        throw new BadReqTypeException(this.ERROR_FRIEND_EXIST_TEXT);
+      } else {
+        result[this.PROPERTY_USER_SUBSCRIBE]?.push(myId);
+        await session.saveChanges();
+      }
+      session.dispose();
+      return result.subscribe;
     }
-    session.dispose();
-    return result.subscribe;
+    throw new BadReqTypeException("incorrect id");
   }
 
   /**
@@ -152,7 +187,6 @@ export class UsersRepo extends BaseRepo<UsersEntity> {
   public async addFriendList(myId: string, userId: string): Promise<string[]> {
     //  открывает мой профиль
     const [myProfile, session] = await this.openSesAndLoadDocById(myId);
-
     if (!myProfile[this.PROPERTY_USER_SUBSCRIBE]?.find(findId => userId === findId) ||
       myProfile[this.PROPERTY_USER_FRIENDS]?.find(findId => userId === findId)) {
       throw new BadReqTypeException(this.ERROR_FRIEND_EXIST_TEXT);
@@ -192,6 +226,14 @@ export class UsersRepo extends BaseRepo<UsersEntity> {
       session.dispose();
     }
 
-    return  myProfile.friends;
+    return myProfile.friends;
+  }
+
+  public async updateProfile(myId: string, newProperty: UsersEntity): Promise<UsersEntity> {
+    let [myProfile, session] = await this.openSesAndLoadDocById(myId);
+    Object.assign(myProfile, newProperty);
+    await session.saveChanges();
+    session.dispose();
+    return this.removeProtectedInfo(this.metadataRemove(myProfile));
   }
 }

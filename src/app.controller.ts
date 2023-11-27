@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Post, Put, UseGuards, UsePipes } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { RavendbService } from "./ravendb/ravendb.service";
+import { RavendbService } from "./repository/services/ravendb/ravendb.service";
 import { AbstractValidationPipe } from "./helpers/pipes/AbstractValidationPipe";
 import { AppDto } from "./repository/validate-dto/App.dto";
 import { Roles } from "./guard/RoleGuard/roles.decorator";

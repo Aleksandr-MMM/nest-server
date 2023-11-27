@@ -8,7 +8,7 @@ export class AlbumPostDto extends AlbumEntity {
   albumName: string;
 }
 
-export class AlbumPutDto {
+export class AlbumPutDto extends AlbumEntity {
   @IsDefined()
   @IsArray()
   @ArrayNotEmpty()

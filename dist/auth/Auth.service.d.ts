@@ -14,7 +14,9 @@ export declare class AuthService {
         email: any;
         id: any;
     };
-    signIn(email: string, id: string, roles: Role[]): Promise<any>;
+    signIn(email: string, id: string, roles: Role[]): Promise<{
+        access_token: string;
+    }>;
     getTemporaryToken(email: string, pass: string, roles: Role[]): Promise<{
         access_token: string;
     }>;

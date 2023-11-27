@@ -6,7 +6,7 @@ export class UsersEntity extends BaseEntity {
     return 'user';
   }
   public email: string
-  public nikName:string;
+  public nickName:string;
   public albumList:string[];
   public status : string|null;
   public friends : string[];

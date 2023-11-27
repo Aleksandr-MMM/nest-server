@@ -11,12 +11,20 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AbstractValidationPipe = void 0;
 const common_1 = require("@nestjs/common");
+const checkEmptyObj_1 = require("../checkEmptyObj");
+const ClientException_1 = require("../../exception/ClientException");
 let AbstractValidationPipe = class AbstractValidationPipe extends common_1.ValidationPipe {
     constructor(options, targetTypes) {
         super(options);
         this.targetTypes = targetTypes;
     }
+    checkEmptyObj(value) {
+        (0, checkEmptyObj_1.isEmptyObj)(value);
+    }
     async transform(value, metadata) {
+        if ((0, checkEmptyObj_1.isEmptyObj)(value)) {
+            throw new ClientException_1.BadReqTypeException('body is empty');
+        }
         const targetType = this.targetTypes[metadata.type];
         if (!targetType) {
             return super.transform(value, metadata);

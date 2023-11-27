@@ -2,6 +2,7 @@ import { BaseEntity } from "../entities";
 import DocumentStore, { IDocumentSession, ObjectTypeDescriptor } from "ravendb";
 import { addProperty } from "../../helpers/addProperty";
 import { AttachmentsTypeException, BadReqTypeException, IdNotFoundException } from "../../exception/ClientException";
+import pipeable from "readable-stream";
 
 /**
  * Сущность репозитория включающая в себя базовые методы для доступа к БД
@@ -22,20 +23,20 @@ export class BaseRepo<TEntity extends BaseEntity> {
     return conv;
   }
 
-  constructor(
-    protected readonly documentStore: DocumentStore,
-    protected readonly descriptor: {
-      class: ObjectTypeDescriptor<TEntity>;
-      collection: string;
-    }
-  ) {
-  }
   /**
    * Принимает имя файла и возвращает его расширение
    */
   protected combineFormatAndFilename(fileName: string): string {
     const re = /(?:\.([^.]+))?$/;
     return re.exec(fileName)[1];
+  }
+
+  constructor(
+    protected readonly documentStore: DocumentStore,
+    protected readonly descriptor: {
+      class: ObjectTypeDescriptor<TEntity>;
+      collection: string;
+    }) {
   }
 
   /**
@@ -55,7 +56,7 @@ export class BaseRepo<TEntity extends BaseEntity> {
   /**
    * Свойтво lastUpdate обновляет время на текущее
    */
-  public  updateEntityDate(entity: TEntity) {
+  public updateEntityDate(entity: TEntity) {
     entity.lastUpdate = new Date().toLocaleString();
   }
 
@@ -106,7 +107,7 @@ export class BaseRepo<TEntity extends BaseEntity> {
   /**
    * Get document by id in db
    */
-  protected async getById(id: string): Promise<TEntity> {
+  public async getById(id: string): Promise<TEntity> {
 
     const [result, session] = await this.openSesAndLoadDocById(id);
     session.dispose();
@@ -122,12 +123,14 @@ export class BaseRepo<TEntity extends BaseEntity> {
   /**
    * Get in db all document
    */
-  protected async retrieveDocuments(): Promise<TEntity[]> {
+  public async retrieveDocuments(): Promise<TEntity[]> {
     const session = this.documentStore.openSession();
     const results = await session
       .query({
         collection: this.descriptor.collection
       })
+      .take(10)
+      .skip(0)
       .all();
     session.dispose();
     return results.map(this.metadataRemove);
@@ -136,7 +139,7 @@ export class BaseRepo<TEntity extends BaseEntity> {
   /**
    * Document exists in db
    */
-  public async documentExists(id: string): Promise<{data:boolean}> {
+  public async documentExists(id: string): Promise<{ data: boolean }> {
     const session = this.documentStore.openSession();
     const exists = await session
       .query({
@@ -152,7 +155,7 @@ export class BaseRepo<TEntity extends BaseEntity> {
   /**
    * Get document by id in db
    */
-  protected async deleteById(id: string): Promise<{id:string}> {
+  public async deleteById(id: string): Promise<{ id: string }> {
     const session = this.documentStore.openSession();
     await session.delete(id);
     await session.saveChanges();
@@ -172,7 +175,7 @@ export class BaseRepo<TEntity extends BaseEntity> {
       const checkAttachments = await session.advanced.attachments.exists(documentId, fileName);
       //  Проверка наличие вложений у документа
       if (!checkAttachments) {
-        await session.advanced.attachments.store(documentId, fileName, file.buffer );
+        await session.advanced.attachments.store(documentId, fileName, file.buffer, "image/jpeg");
       } else {
         throw new AttachmentsTypeException();
       }
@@ -187,10 +190,17 @@ export class BaseRepo<TEntity extends BaseEntity> {
   /**
    * Get attachments in documents
    */
-  public async getAttachment(attachmentId: string, format: string) {
+  public async getAttachment(attachmentId: string, format: string, res: NodeJS.WritableStream)
+    : Promise<pipeable.Readable> | never {
     const session = this.documentStore.openSession();
     const attachmentName = `${attachmentId}.${format}`;
-    console.log(attachmentName)
-    return await session.advanced.attachments.get(attachmentId, attachmentName);
+    const attachmentResult = (await session.advanced.attachments.get(attachmentId, attachmentName));
+    if (attachmentResult) {
+      const stream = attachmentResult.data;
+      stream.pipe(res);
+      return stream;
+    } else {
+      throw new BadReqTypeException("Incorrect id.Please send correct id");
+    }
   }
 }

@@ -1,17 +1,13 @@
+import { UsersEntity } from "../entities/users.entity";
+import { IsDefined, IsOptional, IsString } from "class-validator";
 
-// export class UsersDto extends UsersEntity  {
-//   @IsDefined()
-//   @IsString()
-//   nickName: string| null;
-//   @IsOptional()
-//   @IsString()
-//   status: string | null;
-// }
-// export class TrackFileDto extends TrackEntity{
-//   @IsDefined()
-//   @IsString()
-//   trackName: string| null;
-//   @IsDefined()
-//   @IsString()
-//   author: string | null;
-// }
+export class UsersDto extends UsersEntity  {
+  @IsOptional()
+  @IsDefined()
+  @IsString()
+  nickName: string;
+  @IsOptional()
+  @IsDefined()
+  @IsString()
+  status: string;
+}

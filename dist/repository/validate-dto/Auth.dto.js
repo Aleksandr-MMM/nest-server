@@ -23,6 +23,10 @@ __decorate([
 __decorate([
     (0, class_validator_1.IsDefined)(),
     (0, class_validator_1.IsString)(),
+    (0, class_validator_1.Matches)(/((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*\W))/, {
+        message: "Пароль должен состоять как минимум из:латинских символов,строчной ,прописной буквы," +
+            "цифры [0-9] и специального символа."
+    }),
     __metadata("design:type", String)
 ], UsersDto.prototype, "password", void 0);
 //# sourceMappingURL=Auth.dto.js.map

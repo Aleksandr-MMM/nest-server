@@ -14,10 +14,9 @@ import { AbstractValidationPipe } from "../../../helpers/pipes/AbstractValidatio
 import { Roles } from "../../../guard/RoleGuard/roles.decorator";
 import { Role } from "../../../guard/RoleGuard/role.enum";
 import { RolesGuard } from "../../../guard/RoleGuard/roles.guard";
-
-@Controller("/track")
-@Roles(Role.User)
 @UseGuards(RolesGuard)
+@Roles(Role.User)
+@Controller("/track")
 export class TrackController extends FactoryCRUDController<TrackEntity, TrackRepo, TrackDto>
 (TrackEntity, TrackRepo, {
   postOptions: {

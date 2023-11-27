@@ -15,7 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppController = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
-const ravendb_service_1 = require("./ravendb/ravendb.service");
+const ravendb_service_1 = require("./repository/services/ravendb/ravendb.service");
 const AbstractValidationPipe_1 = require("./helpers/pipes/AbstractValidationPipe");
 const App_dto_1 = require("./repository/validate-dto/App.dto");
 const roles_decorator_1 = require("./guard/RoleGuard/roles.decorator");

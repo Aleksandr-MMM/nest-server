@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DocumentStore, PatchByQueryOperation } from "ravendb";
 import { ConfigService } from "@nestjs/config";
 
-import { getDocumentStore } from "../helpers/getDocumentStore";
+import { getDocumentStore } from "../../../helpers/getDocumentStore";
 
 @Injectable()
 export class RavendbService {

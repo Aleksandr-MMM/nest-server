@@ -13,13 +13,13 @@ class BaseRepo {
         delete conv["@metadata"];
         return conv;
     }
-    constructor(documentStore, descriptor) {
-        this.documentStore = documentStore;
-        this.descriptor = descriptor;
-    }
     combineFormatAndFilename(fileName) {
         const re = /(?:\.([^.]+))?$/;
         return re.exec(fileName)[1];
+    }
+    constructor(documentStore, descriptor) {
+        this.documentStore = documentStore;
+        this.descriptor = descriptor;
     }
     checkPropForUndefinedAndSetNull(body, ...entity) {
         for (let i = 0; i < entity.length; i++) {
@@ -78,6 +78,8 @@ class BaseRepo {
             .query({
             collection: this.descriptor.collection
         })
+            .take(10)
+            .skip(0)
             .all();
         session.dispose();
         return results.map(this.metadataRemove);
@@ -108,7 +110,7 @@ class BaseRepo {
             const fileName = `${documentId}.${this.combineFormatAndFilename(file.originalname)}`;
             const checkAttachments = await session.advanced.attachments.exists(documentId, fileName);
             if (!checkAttachments) {
-                await session.advanced.attachments.store(documentId, fileName, file.buffer);
+                await session.advanced.attachments.store(documentId, fileName, file.buffer, "image/jpeg");
             }
             else {
                 throw new ClientException_1.AttachmentsTypeException();
@@ -121,11 +123,18 @@ class BaseRepo {
         session.dispose();
         return { isAttachment: true };
     }
-    async getAttachment(attachmentId, format) {
+    async getAttachment(attachmentId, format, res) {
         const session = this.documentStore.openSession();
         const attachmentName = `${attachmentId}.${format}`;
-        console.log(attachmentName);
-        return await session.advanced.attachments.get(attachmentId, attachmentName);
+        const attachmentResult = (await session.advanced.attachments.get(attachmentId, attachmentName));
+        if (attachmentResult) {
+            const stream = attachmentResult.data;
+            stream.pipe(res);
+            return stream;
+        }
+        else {
+            throw new ClientException_1.BadReqTypeException("Incorrect id.Please send correct id");
+        }
     }
 }
 exports.BaseRepo = BaseRepo;

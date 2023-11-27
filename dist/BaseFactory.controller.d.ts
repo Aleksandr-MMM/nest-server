@@ -16,4 +16,4 @@ export interface IOptionsController {
     postOptions?: IOptions;
     putOptions?: IOptions;
 }
-export declare function FactoryCRUDController<TEntity extends BaseEntity, TRepository extends BaseRepo<TEntity>, TPostDTO extends BaseEntity, TPutDTO = TPostDTO>(entity: Function, repo: ClassType<TRepository>, options?: IOptionsController): ClassType<IFactoryCRUDController<TPostDTO, TPutDTO>>;
+export declare function FactoryCRUDController<TEntity extends BaseEntity, TRepository extends BaseRepo<TEntity>, TPostDTO extends TEntity, TPutDTO extends TEntity = TPostDTO>(entity: Function, repo: ClassType<TRepository>, options?: IOptionsController): ClassType<IFactoryCRUDController<TPostDTO, TPutDTO>>;

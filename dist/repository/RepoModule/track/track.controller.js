@@ -59,9 +59,9 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], TrackController.prototype, "uploadFile", null);
 exports.TrackController = TrackController = __decorate([
-    (0, common_1.Controller)("/track"),
-    (0, roles_decorator_1.Roles)(role_enum_1.Role.User),
     (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(role_enum_1.Role.User),
+    (0, common_1.Controller)("/track"),
     __metadata("design:paramtypes", [index_1.PersistenceService])
 ], TrackController);
 //# sourceMappingURL=track.controller.js.map

@@ -1,1 +1,0 @@
-//# sourceMappingURL=setHeaderPhoto.js.map

@@ -1,7 +1,7 @@
 import { Module } from "@nestjs/common";
 import { AppController } from "./app.controller";
 import { AppConfigModule } from "./app-config";
-import { RavendbService } from "./ravendb/ravendb.service";
+import { RavendbService } from "./repository/services/ravendb/ravendb.service";
 import { PersistenceModule } from "./repository";
 import { AllRepoModules } from "./repository/RepoModule/AllRepoModules";
 import { AuthModule } from "./auth/auth.module";
