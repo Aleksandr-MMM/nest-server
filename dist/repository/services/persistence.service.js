@@ -25,20 +25,25 @@ let PersistenceService = PersistenceService_1 = class PersistenceService {
         this.descriptorsByName = {};
         this.documentInterfaces = {};
         this.logger = new common_1.Logger(PersistenceService_1.name);
-        this.documentStore = (0, getDocumentStore_1.getDocumentStore)(config);
-        entities_1.entityDescriptor.forEach((descriptor) => {
-            this.documentStore.conventions.registerEntityType(descriptor.class, descriptor.collection);
-            this.collectionsName.push(descriptor.collection);
-            if (this.descriptorsByCollection[descriptor.collection]) {
-                throw `Collection name ${descriptor.collection} already in use`;
-            }
-            else {
-                this.descriptorsByCollection[descriptor.collection] = descriptor;
-                this.descriptorsByName[descriptor.name] = descriptor;
-            }
-        });
-        this.documentStore.initialize();
-        this.executeIndexes().then(() => this.logger.log('RavenDB index execution complete'));
+        try {
+            this.documentStore = (0, getDocumentStore_1.getDocumentStore)(config);
+            entities_1.entityDescriptor.forEach((descriptor) => {
+                this.documentStore.conventions.registerEntityType(descriptor.class, descriptor.collection);
+                this.collectionsName.push(descriptor.collection);
+                if (this.descriptorsByCollection[descriptor.collection]) {
+                    throw `Collection name ${descriptor.collection} already in use`;
+                }
+                else {
+                    this.descriptorsByCollection[descriptor.collection] = descriptor;
+                    this.descriptorsByName[descriptor.name] = descriptor;
+                }
+            });
+            this.documentStore.initialize();
+            this.executeIndexes().then(() => this.logger.log('RavenDB index execution complete'));
+        }
+        catch (error) {
+            console.log(error);
+        }
     }
     getCurrentRepository(Entity, newRepository) {
         if (!this.documentInterfaces[Entity.name]) {

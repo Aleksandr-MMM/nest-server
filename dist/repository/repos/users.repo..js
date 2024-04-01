@@ -15,6 +15,7 @@ let UsersRepo = class UsersRepo extends Base_repo_1.BaseRepo {
         super(...arguments);
         this.ERROR_FRIEND_EXIST_TEXT = "Friendship already send";
         this.ERROR_EMAIL_USE_TEXT = "Email already in use.";
+        this.ERROR_INCORRECT_ALBUM = "Invalid ID received";
         this.ERROR_EMAIL_PASS_TEXT = "Incorrect email or password.";
         this.PROPERTY_USER_FRIENDS = "friends";
         this.PROPERTY_USER_SUBSCRIBE = "subscribe";
@@ -38,17 +39,29 @@ let UsersRepo = class UsersRepo extends Base_repo_1.BaseRepo {
         if (!users) {
             return null;
         }
-        users.forEach(user => {
-            this.removeProtectedInfo(user);
-            this.deleteUserEmail(user);
-        });
-        return users;
+        const usersInfo = [];
+        for (let i = 0; users.length > i; i++) {
+            usersInfo[i] = { id: users[i].id, nickName: users[i].nickName };
+        }
+        return usersInfo;
     }
     deleteEmailAndProtectedInfo(user) {
         if (!user) {
             return null;
         }
         return this.removeProtectedInfo(this.deleteUserEmail(user));
+    }
+    async checkIsMyAlbum(myId, albumId) {
+        const [result, session] = await this.openSesAndLoadDocById(myId);
+        const currentAlbum = result.albumList.find(album => album.id === albumId);
+        await session.saveChanges();
+        session.dispose();
+        if (currentAlbum) {
+            return currentAlbum.id;
+        }
+        else {
+            throw new ClientException_1.BadReqTypeException(this.ERROR_INCORRECT_ALBUM);
+        }
     }
     async _findUserByEmail(email) {
         return (await this.retrieveDocuments()).find(user => user.email === email);
@@ -73,9 +86,13 @@ let UsersRepo = class UsersRepo extends Base_repo_1.BaseRepo {
             throw new ClientException_1.BadReqTypeException(this.ERROR_EMAIL_USE_TEXT);
         }
     }
-    async addAlbumForUser(myId, albumId) {
+    async addAlbumForUser(myId, albumId, albumName = "Новый альбом") {
         const [result, session] = await this.openSesAndLoadDocById(myId);
-        result.albumList.push(albumId);
+        const createNewAlbumList = {
+            id: albumId, albumName: albumName
+        };
+        result.albumList.push(createNewAlbumList);
+        await session.saveChanges();
         session.dispose();
         return this.metadataRemove(this.removeProtectedInfo(result));
     }

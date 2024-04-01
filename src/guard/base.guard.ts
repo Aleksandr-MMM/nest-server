@@ -1,5 +1,4 @@
 import {
-  CanActivate,
   ExecutionContext,
   Injectable,
   UnauthorizedException
@@ -7,6 +6,13 @@ import {
 import { JwtService } from "@nestjs/jwt";
 import { Request } from "express";
 import { jwtConstants } from "../auth/constants";
+
+type verifyUserToken = {
+  email: string,
+  id: string,
+  roles: string[],
+};
+export type guardRequestType = Request & { user: verifyUserToken };
 
 /**
  * Базовая реализация проверки Bearer token. Возвращает true если токен
@@ -22,8 +28,8 @@ export class BaseGuard {
       throw new UnauthorizedException();
     }
     try {
-      let payload;
-      payload = await jwtService.verifyAsync(
+      let payload: verifyUserToken;
+      payload = await jwtService.verifyAsync<verifyUserToken>(
         token,
         {
           secret: jwtConstants.secret

@@ -19,10 +19,11 @@ const BaseFactory_controller_1 = require("../../../BaseFactory.controller");
 const Track_dto_1 = require("../../validate-dto/Track.dto");
 const platform_express_1 = require("@nestjs/platform-express");
 const ValidateFilePipes_1 = require("../../../helpers/pipes/ValidateFilePipes");
-const AbstractValidationPipe_1 = require("../../../helpers/pipes/AbstractValidationPipe");
 const roles_decorator_1 = require("../../../guard/RoleGuard/roles.decorator");
 const role_enum_1 = require("../../../guard/RoleGuard/role.enum");
 const roles_guard_1 = require("../../../guard/RoleGuard/roles.guard");
+const album_entity_1 = require("../../entities/album.entity");
+const Album_repo_1 = require("../../repos/Album.repo");
 let TrackController = class TrackController extends (0, BaseFactory_controller_1.FactoryCRUDController)(index_1.TrackEntity, index_1.TrackRepo, {
     postOptions: {
         DTO: Track_dto_1.TrackDto
@@ -34,30 +35,53 @@ let TrackController = class TrackController extends (0, BaseFactory_controller_1
     constructor(persistence) {
         super(persistence);
         this.persistence = persistence;
+        this.albumRepository = persistence.getCurrentRepository(album_entity_1.AlbumEntity, Album_repo_1.AlbumRepo);
     }
-    async uploadFile(file, trackId, body) {
+    async uploadFile(file, body) {
         body = this.currentRepository.checkPropForUndefinedAndSetNull(body, 'trackName', 'author');
         const createNewTrackProperty = this.currentRepository.storeDocument(body);
-        return this.currentRepository.addAttachment((await createNewTrackProperty).id, file);
+        return this.currentRepository.addAttachment((await createNewTrackProperty).id, file, { formatFile: 'mp3', contentType: "audio/mp3" });
+    }
+    async uploadFileAndAddInMyAlbum(file, body, albumId) {
+        const uploadTrackEntity = await this.uploadFile(file, body);
+        const trackList = [];
+        trackList.push(uploadTrackEntity.id);
+        return await this.albumRepository.addTrackInAlbum(trackList, albumId);
+    }
+    async getTrackFile(trackId, res) {
+        return this.currentRepository.getAttachment(trackId, "mp3", res);
     }
 };
 exports.TrackController = TrackController;
 __decorate([
     (0, common_1.Post)(),
+    (0, common_1.UsePipes)(new common_1.ValidationPipe({ whitelist: true })),
     (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)("music", { storage: null })),
-    (0, common_1.UsePipes)(new AbstractValidationPipe_1.AbstractValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true
-    }, {
-        body: Track_dto_1.TrackDto
-    })),
     __param(0, (0, common_1.UploadedFile)((0, ValidateFilePipes_1.validateFilePipes)(/(mpeg)$/, 10))),
-    __param(1, (0, common_1.Param)("id")),
-    __param(2, (0, common_1.Body)()),
+    __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String, Track_dto_1.TrackDto]),
+    __metadata("design:paramtypes", [Object, Track_dto_1.TrackDto]),
     __metadata("design:returntype", Promise)
 ], TrackController.prototype, "uploadFile", null);
+__decorate([
+    (0, common_1.Post)('/inAlbum/:id'),
+    (0, common_1.UsePipes)(new common_1.ValidationPipe({ whitelist: true })),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)("music", { storage: null })),
+    __param(0, (0, common_1.UploadedFile)((0, ValidateFilePipes_1.validateFilePipes)(/(mpeg)$/, 10))),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Param)("id")),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Track_dto_1.TrackDto, String]),
+    __metadata("design:returntype", Promise)
+], TrackController.prototype, "uploadFileAndAddInMyAlbum", null);
+__decorate([
+    (0, common_1.Get)('/file/:id'),
+    __param(0, (0, common_1.Param)("id")),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], TrackController.prototype, "getTrackFile", null);
 exports.TrackController = TrackController = __decorate([
     (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(role_enum_1.Role.User),

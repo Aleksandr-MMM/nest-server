@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.BaseRepo = void 0;
 const addProperty_1 = require("../../helpers/addProperty");
 const ClientException_1 = require("../../exception/ClientException");
+const BaseClientException_1 = require("../../exception/BaseClientException");
 class BaseRepo {
     metadataRemove(obj) {
         if (!obj) {
@@ -13,9 +14,26 @@ class BaseRepo {
         delete conv["@metadata"];
         return conv;
     }
-    combineFormatAndFilename(fileName) {
-        const re = /(?:\.([^.]+))?$/;
-        return re.exec(fileName)[1];
+    async searchDocuments(session, id, documentCount = 10, startCount = 0) {
+        if (id) {
+            return await session
+                .query({
+                collection: this.descriptor.collection
+            })
+                .take(documentCount)
+                .skip(startCount)
+                .whereNotEquals("id", id)
+                .all();
+        }
+        else {
+            return await session
+                .query({
+                collection: this.descriptor.collection
+            })
+                .take(documentCount)
+                .skip(startCount)
+                .all();
+        }
     }
     constructor(documentStore, descriptor) {
         this.documentStore = documentStore;
@@ -72,15 +90,9 @@ class BaseRepo {
         }
         return this.metadataRemove(result);
     }
-    async retrieveDocuments() {
+    async retrieveDocuments(documentCount = 10, startCount = 0, exclude) {
         const session = this.documentStore.openSession();
-        const results = await session
-            .query({
-            collection: this.descriptor.collection
-        })
-            .take(10)
-            .skip(0)
-            .all();
+        const results = await this.searchDocuments(session, exclude);
         session.dispose();
         return results.map(this.metadataRemove);
     }
@@ -103,37 +115,31 @@ class BaseRepo {
         session.dispose();
         return { id: id };
     }
-    async addAttachment(documentId, file) {
+    async addAttachment(documentId, file, config) {
         const session = this.documentStore.openSession();
         const isFindTrack = await this.documentExists(documentId);
         if (isFindTrack.data) {
-            const fileName = `${documentId}.${this.combineFormatAndFilename(file.originalname)}`;
-            const checkAttachments = await session.advanced.attachments.exists(documentId, fileName);
-            if (!checkAttachments) {
-                await session.advanced.attachments.store(documentId, fileName, file.buffer, "image/jpeg");
-            }
-            else {
-                throw new ClientException_1.AttachmentsTypeException();
-            }
+            const fileName = `${documentId}.${config.formatFile}`;
+            await session.advanced.attachments.store(documentId, fileName, file.buffer, config.formatFile);
         }
         else {
-            throw new ClientException_1.BadReqTypeException("Incorrect request.Please send correct id");
+            throw new ClientException_1.AttachmentsTypeException();
         }
         await session.saveChanges();
         session.dispose();
-        return { isAttachment: true };
+        return { isAttachment: true, id: documentId };
     }
     async getAttachment(attachmentId, format, res) {
         const session = this.documentStore.openSession();
         const attachmentName = `${attachmentId}.${format}`;
-        const attachmentResult = (await session.advanced.attachments.get(attachmentId, attachmentName));
+        const attachmentResult = await session.advanced.attachments.get(attachmentId, attachmentName);
         if (attachmentResult) {
             const stream = attachmentResult.data;
             stream.pipe(res);
             return stream;
         }
         else {
-            throw new ClientException_1.BadReqTypeException("Incorrect id.Please send correct id");
+            throw new BaseClientException_1.BaseClientException(404, "Attachment not found");
         }
     }
 }

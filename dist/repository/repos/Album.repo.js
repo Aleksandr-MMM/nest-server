@@ -15,13 +15,13 @@ class AlbumRepo extends Base_repo_1.BaseRepo {
             findAlbumEntity.trackList = findAlbumEntity.trackList.filter(item => item !== trackListInBody[i]);
         }
     }
-    async addTrackInAlbum(body, albumId) {
+    async addTrackInAlbum(trackList, albumId) {
         const session = this.documentStore.openSession();
         let result = await session.load(albumId, {
             documentType: this.descriptor.class
         });
         if (result) {
-            AlbumRepo.pushNewTracks(result, body.trackList);
+            AlbumRepo.pushNewTracks(result, trackList);
             result.lastUpdate = new Date().toLocaleString();
         }
         await session.saveChanges();
@@ -40,6 +40,17 @@ class AlbumRepo extends Base_repo_1.BaseRepo {
         await session.saveChanges();
         await session.dispose();
         return this.metadataRemove(result);
+    }
+    async findAlbumsByIds(ids) {
+        const session = this.documentStore.openSession();
+        let result = await session.load(ids, { documentType: this.descriptor.class });
+        const albumsArr = [];
+        for (let key in result) {
+            albumsArr.push(this.metadataRemove(result[key]));
+        }
+        await session.saveChanges();
+        await session.dispose();
+        return albumsArr;
     }
 }
 exports.AlbumRepo = AlbumRepo;

@@ -7,6 +7,5 @@ export declare class AbstractValidationPipe extends ValidationPipe {
         param?: Type;
         custom?: Type;
     });
-    private checkEmptyObj;
     transform(value: any, metadata: ArgumentMetadata): Promise<any>;
 }

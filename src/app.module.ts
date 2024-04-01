@@ -7,6 +7,7 @@ import { AllRepoModules } from "./repository/RepoModule/AllRepoModules";
 import { AuthModule } from "./auth/auth.module";
 import { NestMailerModule } from "./globalModule/nestMailerModule/NestMailer.module";
 import { GlobalThrottlerModule } from "./globalModule/throttlerModule/tthrottler.module";
+import { MyLogger } from "./Loger/Loger";
 
 @Module({
   imports: [
@@ -15,7 +16,7 @@ import { GlobalThrottlerModule } from "./globalModule/throttlerModule/tthrottler
   ],
   controllers: [AppController],
   providers: [
-    RavendbService,
+    RavendbService,MyLogger
     // {
     //   provide: APP_GUARD,
     //   useClass: RolesGuard

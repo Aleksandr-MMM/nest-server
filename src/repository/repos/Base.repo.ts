@@ -1,8 +1,14 @@
 import { BaseEntity } from "../entities";
 import DocumentStore, { IDocumentSession, ObjectTypeDescriptor } from "ravendb";
 import { addProperty } from "../../helpers/addProperty";
-import { AttachmentsTypeException, BadReqTypeException, IdNotFoundException } from "../../exception/ClientException";
+import { AttachmentsTypeException, IdNotFoundException } from "../../exception/ClientException";
 import pipeable from "readable-stream";
+import { BaseClientException } from "../../exception/BaseClientException";
+
+type attachmentConfig={
+    contentType:string
+    formatFile:string
+}
 
 /**
  * Сущность репозитория включающая в себя базовые методы для доступа к БД
@@ -23,13 +29,34 @@ export class BaseRepo<TEntity extends BaseEntity> {
     return conv;
   }
 
+  private async searchDocuments(session: IDocumentSession, id?: string, documentCount: number = 10, startCount: number = 0) {
+    if (id) {
+      return await session
+        .query({
+          collection: this.descriptor.collection
+        })
+        .take(documentCount)
+        .skip(startCount)
+        .whereNotEquals("id", id)
+        .all();
+    } else {
+      return await session
+        .query({
+          collection: this.descriptor.collection
+        })
+        .take(documentCount)
+        .skip(startCount)
+        .all();
+    }
+  }
+
   /**
    * Принимает имя файла и возвращает его расширение
    */
-  protected combineFormatAndFilename(fileName: string): string {
-    const re = /(?:\.([^.]+))?$/;
-    return re.exec(fileName)[1];
-  }
+  // protected combineFormatAndFilename(fileName: string): string {
+  //   const re = /(?:\.([^.]+))?$/;
+  //   return re.exec(fileName)[1];
+  // }
 
   constructor(
     protected readonly documentStore: DocumentStore,
@@ -120,18 +147,14 @@ export class BaseRepo<TEntity extends BaseEntity> {
     return this.metadataRemove(result);
   }
 
+
   /**
    * Get in db all document
    */
-  public async retrieveDocuments(): Promise<TEntity[]> {
+  public async retrieveDocuments(documentCount: number = 10, startCount: number = 0, exclude?: string)
+    : Promise<TEntity[]> {
     const session = this.documentStore.openSession();
-    const results = await session
-      .query({
-        collection: this.descriptor.collection
-      })
-      .take(10)
-      .skip(0)
-      .all();
+    const results = await this.searchDocuments(session, exclude);
     session.dispose();
     return results.map(this.metadataRemove);
   }
@@ -166,41 +189,42 @@ export class BaseRepo<TEntity extends BaseEntity> {
   /**
    * add attachments in documents
    */
-  public async addAttachment(documentId: string, file: Express.Multer.File): Promise<{ isAttachment: boolean }> {
+  public async addAttachment(documentId: string, file: Express.Multer.File, config:attachmentConfig)
+    : Promise<{ isAttachment: boolean, id: string }> {
     const session = this.documentStore.openSession();
     const isFindTrack = await this.documentExists(documentId);
     //  Проверка на наличие созданного документа
     if (isFindTrack.data) {
-      const fileName = `${documentId}.${this.combineFormatAndFilename(file.originalname)}`;
-      const checkAttachments = await session.advanced.attachments.exists(documentId, fileName);
-      //  Проверка наличие вложений у документа
-      if (!checkAttachments) {
-        await session.advanced.attachments.store(documentId, fileName, file.buffer, "image/jpeg");
-      } else {
-        throw new AttachmentsTypeException();
-      }
+      const fileName = `${documentId}.${config.formatFile 
+        // ? formatFile : this.combineFormatAndFilename(file.originalname)
+      }`;
+      await session.advanced.attachments.store(documentId, fileName, file.buffer,
+        // "image/jpeg"
+        config.formatFile
+      );
     } else {
-      throw new BadReqTypeException("Incorrect request.Please send correct id");
+      throw new AttachmentsTypeException();
     }
     await session.saveChanges();
     session.dispose();
-    return { isAttachment: true };
+    return { isAttachment: true, id: documentId };
   }
 
   /**
    * Get attachments in documents
    */
-  public async getAttachment(attachmentId: string, format: string, res: NodeJS.WritableStream)
-    : Promise<pipeable.Readable> | never {
+  public async getAttachment(attachmentId: string, format: string, res: NodeJS.WritableStream | never)
+    : Promise<pipeable.Readable | any> {
     const session = this.documentStore.openSession();
+
     const attachmentName = `${attachmentId}.${format}`;
-    const attachmentResult = (await session.advanced.attachments.get(attachmentId, attachmentName));
+    const attachmentResult = await session.advanced.attachments.get(attachmentId, attachmentName);
     if (attachmentResult) {
       const stream = attachmentResult.data;
       stream.pipe(res);
       return stream;
     } else {
-      throw new BadReqTypeException("Incorrect id.Please send correct id");
+      throw new BaseClientException(404, "Attachment not found");
     }
   }
 }

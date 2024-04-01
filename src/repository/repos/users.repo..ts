@@ -3,12 +3,14 @@ import { UsersEntity } from "../entities/users.entity";
 import { BaseRepo } from "./Base.repo";
 import { BadReqTypeException, IdNotFoundException } from "../../exception/ClientException";
 import { Role } from "../../guard/RoleGuard/role.enum";
+import { AlbumEntity } from "../entities/album.entity";
 
 @Injectable()
 export class UsersRepo extends BaseRepo<UsersEntity> {
 
   private readonly ERROR_FRIEND_EXIST_TEXT = "Friendship already send";
   private readonly ERROR_EMAIL_USE_TEXT = "Email already in use.";
+  private readonly ERROR_INCORRECT_ALBUM = "Invalid ID received";
   private readonly ERROR_EMAIL_PASS_TEXT = "Incorrect email or password.";
   private readonly PROPERTY_USER_FRIENDS = "friends";
   private readonly PROPERTY_USER_SUBSCRIBE = "subscribe";
@@ -40,19 +42,31 @@ export class UsersRepo extends BaseRepo<UsersEntity> {
   }
 
   /**
+   * Удаляет Email у пользователя
+   * @param user профиль пользователя
+   */
+  // protected deleteInfo(user: UsersEntity): { id: string, nickName: string } {
+  //   if (!user) {
+  //     return null;
+  //   }
+  //   return { id: user.id, nickName: user.nickName };
+  // }
+
+  /**
    * Удаляет Email у всех пользователей
    * @param users профили пользователей
    */
-  public deleteUsersEmailAndProtectedInfo(users: UsersEntity[]): UsersEntity[] {
+  public deleteUsersEmailAndProtectedInfo(users: UsersEntity[]): { id: string, nickName: string }[] {
     if (!users) {
       return null;
     }
-    users.forEach(user => {
-      this.removeProtectedInfo(user)
-      this.deleteUserEmail(user);
-    });
-    return users;
+    const usersInfo = [] as { id: string, nickName: string }[];
+    for (let i = 0; users.length > i; i++) {
+      usersInfo[i] = { id: users[i].id, nickName: users[i].nickName };
+    }
+    return usersInfo;
   }
+
   /**
    * Удаляет Email и  protected свойства
    * @param user профиль пользователя
@@ -64,6 +78,19 @@ export class UsersRepo extends BaseRepo<UsersEntity> {
     return this.removeProtectedInfo(this.deleteUserEmail(user));
   }
 
+  public async checkIsMyAlbum(myId:string,albumId:string):Promise<AlbumEntity['id']>{
+    const [result, session] = await this.openSesAndLoadDocById(myId);
+    const currentAlbum=result.albumList.find(album=>album.id===albumId)
+    await session.saveChanges()
+    session.dispose()
+    if(currentAlbum){
+      return currentAlbum.id
+    }
+    else{
+      throw new BadReqTypeException(this.ERROR_INCORRECT_ALBUM)
+    }
+
+  }
   /**
    * Найти пользователя по email
    * @param email email пользователя
@@ -104,10 +131,15 @@ export class UsersRepo extends BaseRepo<UsersEntity> {
    * Создает новый альбом у пользователя.
    * @param myId мой id профиля
    * @param albumId id созданного альбома
+   * @param albumName имя плейлиста
    */
-  public async addAlbumForUser(myId: string, albumId: string): Promise<UsersEntity> {
+  public async addAlbumForUser(myId: string, albumId: string, albumName: string = "Новый альбом"): Promise<UsersEntity> {
     const [result, session] = await this.openSesAndLoadDocById(myId);
-    result.albumList.push(albumId);
+    const createNewAlbumList = {
+      id: albumId, albumName: albumName
+    } as AlbumEntity;
+    result.albumList.push(createNewAlbumList);
+    await session.saveChanges();
     session.dispose();
     return this.metadataRemove(this.removeProtectedInfo(result));
   }

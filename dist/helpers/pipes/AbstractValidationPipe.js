@@ -18,9 +18,6 @@ let AbstractValidationPipe = class AbstractValidationPipe extends common_1.Valid
         super(options);
         this.targetTypes = targetTypes;
     }
-    checkEmptyObj(value) {
-        (0, checkEmptyObj_1.isEmptyObj)(value);
-    }
     async transform(value, metadata) {
         if ((0, checkEmptyObj_1.isEmptyObj)(value)) {
             throw new ClientException_1.BadReqTypeException('body is empty');

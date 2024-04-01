@@ -30,16 +30,17 @@ let UsersController = class UsersController {
         this.persistence = persistence;
         this.currentRepository = persistence.getCurrentRepository(users_entity_1.UsersEntity, users_repo_1.UsersRepo);
     }
-    async getPhoto(userId, res) {
-        return this.currentRepository.getAttachment(userId, "jpg", res);
-    }
-    async getUsers() {
-        const users = await this.currentRepository.retrieveDocuments();
+    async getUsers(req) {
+        const users = await this.currentRepository.retrieveDocuments(10, 0, req.user.id);
         return this.currentRepository.deleteUsersEmailAndProtectedInfo(users);
     }
     async getUserById(id) {
         const foundUser = await this.currentRepository.getById(id);
         return this.currentRepository.deleteEmailAndProtectedInfo(foundUser);
+    }
+    async putUserProperty(body, req) {
+        const updatedUser = await this.currentRepository.updateProfile(req.user.id, body);
+        return this.currentRepository.deleteEmailAndProtectedInfo(updatedUser);
     }
     async subscribeUser(req, userId) {
         if (await this.currentRepository.documentExists(userId)) {
@@ -49,6 +50,9 @@ let UsersController = class UsersController {
             throw new ClientException_1.IdNotFoundException();
         }
     }
+    async unSubscribeUser(req, userId) {
+        return this.currentRepository.unSubscribeUser(req.user.id, userId);
+    }
     async addFriend(req, userId) {
         if (await this.currentRepository.documentExists(userId)) {
             return this.currentRepository.addFriendList(req.user.id, userId);
@@ -57,33 +61,22 @@ let UsersController = class UsersController {
             throw new ClientException_1.IdNotFoundException();
         }
     }
-    async putUserProperty(body, req) {
-        const updatedUser = await this.currentRepository.updateProfile(req.user.id, body);
-        return this.currentRepository.deleteEmailAndProtectedInfo(updatedUser);
-    }
-    async unSubscribeUser(req, userId) {
-        return this.currentRepository.unSubscribeUser(req.user.id, userId);
-    }
     async unFriend(req, userId) {
         return this.currentRepository.unFriend(req.user.id, userId);
     }
-    async addPhoto(file, req, userId) {
-        return this.currentRepository.addAttachment(req.user.id, file);
+    async getPhoto(userId, res) {
+        return this.currentRepository.getAttachment(userId, "jpeg", res);
+    }
+    async addPhoto(file, req) {
+        return this.currentRepository.addAttachment(req.user.id, file, { formatFile: 'jpeg', contentType: "image/jpeg" });
     }
 };
 exports.UsersController = UsersController;
 __decorate([
-    (0, common_1.Get)("/photo/:id"),
-    __param(0, (0, common_1.Param)("id")),
-    __param(1, (0, common_1.Res)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
-    __metadata("design:returntype", Promise)
-], UsersController.prototype, "getPhoto", null);
-__decorate([
     (0, common_1.Get)(),
+    __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "getUsers", null);
 __decorate([
@@ -93,22 +86,6 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "getUserById", null);
-__decorate([
-    (0, common_1.Put)("/subscribe/:id"),
-    __param(0, (0, common_1.Req)()),
-    __param(1, (0, common_1.Param)("id")),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String]),
-    __metadata("design:returntype", Promise)
-], UsersController.prototype, "subscribeUser", null);
-__decorate([
-    (0, common_1.Put)("/addFriend/:id"),
-    __param(0, (0, common_1.Req)()),
-    __param(1, (0, common_1.Param)("id")),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String]),
-    __metadata("design:returntype", Promise)
-], UsersController.prototype, "addFriend", null);
 __decorate([
     (0, common_1.Put)("/updateProperty"),
     (0, common_1.UsePipes)(new AbstractValidationPipe_1.AbstractValidationPipe({
@@ -122,6 +99,14 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "putUserProperty", null);
 __decorate([
+    (0, common_1.Put)("/subscribe/:id"),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)("id")),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "subscribeUser", null);
+__decorate([
     (0, common_1.Delete)("/unSubscribe/:id"),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Param)("id")),
@@ -129,6 +114,14 @@ __decorate([
     __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "unSubscribeUser", null);
+__decorate([
+    (0, common_1.Put)("/addFriend/:id"),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)("id")),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "addFriend", null);
 __decorate([
     (0, common_1.Delete)("/unFriend/:id"),
     __param(0, (0, common_1.Req)()),
@@ -138,13 +131,20 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "unFriend", null);
 __decorate([
+    (0, common_1.Get)("/photo/:id"),
+    __param(0, (0, common_1.Param)("id")),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "getPhoto", null);
+__decorate([
     (0, common_1.Post)("/addPhoto"),
     (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)("photo", { storage: null })),
-    __param(0, (0, common_1.UploadedFile)((0, ValidateFilePipes_1.validateFilePipes)(/(jpeg)$/, 5))),
+    __param(0, (0, common_1.UploadedFile)((0, ValidateFilePipes_1.validateFilePipes)(/(gif|jpe?g|tiff?|png|webp|bmp)$/, 5))),
     __param(1, (0, common_1.Req)()),
-    __param(2, (0, common_1.Param)("id")),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Object, String]),
+    __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "addPhoto", null);
 exports.UsersController = UsersController = __decorate([

@@ -20,28 +20,30 @@ export class PersistenceService {
 
   }
   constructor(private readonly config: ConfigService) {
+    try {
+      this.documentStore = getDocumentStore(config)
+      entityDescriptor.forEach((descriptor) => {
+        this.documentStore.conventions.registerEntityType(
+          descriptor.class,
+          descriptor.collection,
+        );
+        this.collectionsName.push(descriptor.collection)
 
-    this.documentStore = getDocumentStore(config)
-
-    entityDescriptor.forEach((descriptor) => {
-      this.documentStore.conventions.registerEntityType(
-        descriptor.class,
-        descriptor.collection,
+        if (this.descriptorsByCollection[descriptor.collection]) {
+          throw `Collection name ${descriptor.collection} already in use`;
+        } else {
+          this.descriptorsByCollection[descriptor.collection] = descriptor;
+          this.descriptorsByName[descriptor.name] = descriptor;
+        }
+      });
+      this.documentStore.initialize();
+      this.executeIndexes().then(() =>
+        this.logger.log('RavenDB index execution complete'),
       );
-      this.collectionsName.push(descriptor.collection)
-
-      if (this.descriptorsByCollection[descriptor.collection]) {
-        throw `Collection name ${descriptor.collection} already in use`;
-      } else {
-        this.descriptorsByCollection[descriptor.collection] = descriptor;
-        this.descriptorsByName[descriptor.name] = descriptor;
-      }
-    });
-    this.documentStore.initialize();
-
-    this.executeIndexes().then(() =>
-      this.logger.log('RavenDB index execution complete'),
-    );
+    }
+    catch (error){
+      console.log(error)
+    }
   }
 
   public getCurrentRepository<TEntity extends BaseEntity,

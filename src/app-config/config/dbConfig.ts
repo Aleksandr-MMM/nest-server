@@ -1,5 +1,5 @@
 import { CreateConfig } from "../utils/CreateConfig";
-import { IDbConfig, IMailConfig } from "../types/confTypes";
+import { IDbConfig } from "../types/confTypes";
 import * as Joi from "joi";
 import { registerAs } from "@nestjs/config";
 

@@ -16,6 +16,7 @@ const AllRepoModules_1 = require("./repository/RepoModule/AllRepoModules");
 const auth_module_1 = require("./auth/auth.module");
 const NestMailer_module_1 = require("./globalModule/nestMailerModule/NestMailer.module");
 const tthrottler_module_1 = require("./globalModule/throttlerModule/tthrottler.module");
+const Loger_1 = require("./Loger/Loger");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -27,7 +28,7 @@ exports.AppModule = AppModule = __decorate([
         ],
         controllers: [app_controller_1.AppController],
         providers: [
-            ravendb_service_1.RavendbService,
+            ravendb_service_1.RavendbService, Loger_1.MyLogger
         ]
     })
 ], AppModule);

@@ -8,17 +8,42 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var RavendbService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RavendbService = void 0;
 const common_1 = require("@nestjs/common");
 const ravendb_1 = require("ravendb");
 const config_1 = require("@nestjs/config");
 const getDocumentStore_1 = require("../../../helpers/getDocumentStore");
-let RavendbService = class RavendbService {
-    constructor(config) {
+const Loger_1 = require("../../../Loger/Loger");
+let RavendbService = RavendbService_1 = class RavendbService {
+    tryConnectingStore(store, tryConnectingCount, logger) {
+        for (let i = 1;; i++) {
+            if (logger) {
+                logger.sendLogMessage(`Пытаюсь пожключиться к базе данных ${i} ...`, RavendbService_1.name);
+            }
+            try {
+                const session = store.openSession();
+                const objects = session.query({}).noTracking().first();
+                if (objects) {
+                    if (logger) {
+                        logger.sendLogMessage(`Произошло подключение к базе данных `, RavendbService_1.name);
+                    }
+                    break;
+                }
+            }
+            catch (err) {
+                if (i >= tryConnectingCount) {
+                    throw Error("Проюлемма с подключением к базе данных к базе данных.");
+                }
+            }
+        }
+    }
+    constructor(config, logger) {
         this.config = config;
         this.store = (0, getDocumentStore_1.getDocumentStore)(config);
         this.store.initialize();
+        this.tryConnectingStore(this.store, 3, logger);
     }
     async storeDocument(document) {
         const session = this.store.openSession();
@@ -29,18 +54,12 @@ let RavendbService = class RavendbService {
     }
     async updateCollection(databaseName, entityName, entityValue) {
         await this.store.operations.send(new ravendb_1.PatchByQueryOperation(`from '${databaseName}' ` + `update ` + `{this.${entityName}=${entityValue}}`));
-        return 'success';
-    }
-    async listDocuments() {
-        const session = this.store.openSession();
-        const objects = await session.query({}).noTracking().all();
-        session.dispose();
-        return objects;
+        return "success";
     }
 };
 exports.RavendbService = RavendbService;
-exports.RavendbService = RavendbService = __decorate([
+exports.RavendbService = RavendbService = RavendbService_1 = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [config_1.ConfigService])
+    __metadata("design:paramtypes", [config_1.ConfigService, Loger_1.MyLogger])
 ], RavendbService);
 //# sourceMappingURL=ravendb.service.js.map

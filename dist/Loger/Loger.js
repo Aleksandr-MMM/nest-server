@@ -7,16 +7,21 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 var MyLogger_1;
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.MyLogger = void 0;
 const common_1 = require("@nestjs/common");
 let MyLogger = MyLogger_1 = class MyLogger {
     constructor() {
         this.logger = new common_1.Logger(MyLogger_1.name);
     }
-    doSomething() {
-        this.logger.log('Doing something...');
+    sendLogMessage(loggerMassage, loggerName) {
+        if (loggerName) {
+            this.logger = new common_1.Logger(loggerName);
+        }
+        this.logger.log(loggerMassage ? loggerMassage : "Модуль запущен");
     }
 };
-MyLogger = MyLogger_1 = __decorate([
+exports.MyLogger = MyLogger;
+exports.MyLogger = MyLogger = MyLogger_1 = __decorate([
     (0, common_1.Injectable)()
 ], MyLogger);
 //# sourceMappingURL=Loger.js.map

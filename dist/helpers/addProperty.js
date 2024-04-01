@@ -4,7 +4,7 @@ exports.addProperty = void 0;
 const addProperty = (...anyValue) => {
     let value;
     for (let i = 0; anyValue.length > i; i++) {
-        value = Object.assign(Object.assign({}, value), anyValue[i]);
+        value = Object.assign({}, anyValue[i]);
     }
     return value;
 };

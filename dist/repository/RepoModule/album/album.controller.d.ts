@@ -14,7 +14,16 @@ export declare class AlbumController extends AlbumController_base {
     };
     constructor(persistence: PersistenceService);
     createDocument(body: AlbumEntity, req: any): Promise<UsersEntity>;
-    pushTrackInDocument(id: string, body: AlbumEntity): Promise<AlbumEntity>;
-    delTrackInDocument(id: string, body: AlbumEntity): Promise<AlbumEntity>;
+    pushTrackInDocument(id: string, body: Pick<AlbumEntity, 'trackList'>): Promise<AlbumEntity>;
+    delTrackInDocument(id: string, req: {
+        user: {
+            id: string;
+        };
+    }, body: AlbumEntity): Promise<AlbumEntity>;
+    getMyAlbums(req: {
+        user: {
+            id: string;
+        };
+    }): Promise<AlbumEntity[]>;
 }
 export {};

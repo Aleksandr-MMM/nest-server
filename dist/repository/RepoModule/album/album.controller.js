@@ -34,22 +34,28 @@ let AlbumController = class AlbumController extends (0, BaseFactory_controller_1
         this.albumRepository = persistence.getCurrentRepository(album_entity_1.AlbumEntity, Album_repo_1.AlbumRepo);
     }
     async createDocument(body, req) {
-        console.log('test1');
         const newAlbum = await this.albumRepository.storeDocument(body, this.addNewAlbumProperty);
-        return await this.userRepository.addAlbumForUser(req.user.id, newAlbum.id);
+        return await this.userRepository.addAlbumForUser(req.user.id, newAlbum.id, body.albumName);
     }
     async pushTrackInDocument(id, body) {
-        return await this.albumRepository.addTrackInAlbum(body, id);
+        return await this.albumRepository.addTrackInAlbum(body.trackList, id);
     }
-    async delTrackInDocument(id, body) {
-        return await this.albumRepository.delTrackInAlbum(body, id);
+    async delTrackInDocument(id, req, body) {
+        const checkAlbumId = await this.userRepository.checkIsMyAlbum(req.user.id, id);
+        return await this.albumRepository.delTrackInAlbum(body, checkAlbumId);
+    }
+    async getMyAlbums(req) {
+        const albums = (await this.userRepository.getById(req.user.id)).albumList.map(album => album.id);
+        return await this.albumRepository.findAlbumsByIds(albums);
     }
 };
 exports.AlbumController = AlbumController;
 __decorate([
     (0, common_1.Post)(),
-    (0, common_1.UsePipes)(new AbstractValidationPipe_1.AbstractValidationPipe({ whitelist: true,
-        forbidNonWhitelisted: true }, {
+    (0, common_1.UsePipes)(new AbstractValidationPipe_1.AbstractValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true
+    }, {
         body: Album_dto_1.AlbumPostDto
     })),
     __param(0, (0, common_1.Body)()),
@@ -60,24 +66,36 @@ __decorate([
 ], AlbumController.prototype, "createDocument", null);
 __decorate([
     (0, common_1.Put)("/track/:id"),
-    (0, common_1.UsePipes)(new AbstractValidationPipe_1.AbstractValidationPipe({ whitelist: true,
-        forbidNonWhitelisted: true }, { body: Album_dto_1.AlbumPutDto })),
+    (0, common_1.UsePipes)(new AbstractValidationPipe_1.AbstractValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true
+    }, { body: Album_dto_1.AlbumPutDto })),
     __param(0, (0, common_1.Param)("id")),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, album_entity_1.AlbumEntity]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], AlbumController.prototype, "pushTrackInDocument", null);
 __decorate([
     (0, common_1.Delete)("/track/:id"),
-    (0, common_1.UsePipes)(new AbstractValidationPipe_1.AbstractValidationPipe({ whitelist: true,
-        forbidNonWhitelisted: true }, { body: Album_dto_1.AlbumPutDto })),
+    (0, common_1.UsePipes)(new AbstractValidationPipe_1.AbstractValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true
+    }, { body: Album_dto_1.AlbumPutDto })),
     __param(0, (0, common_1.Param)("id")),
-    __param(1, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
+    __param(2, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, album_entity_1.AlbumEntity]),
+    __metadata("design:paramtypes", [String, Object, album_entity_1.AlbumEntity]),
     __metadata("design:returntype", Promise)
 ], AlbumController.prototype, "delTrackInDocument", null);
+__decorate([
+    (0, common_1.Get)("/myAlbums"),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AlbumController.prototype, "getMyAlbums", null);
 exports.AlbumController = AlbumController = __decorate([
     (0, common_1.Controller)("/album"),
     (0, roles_decorator_1.Roles)(role_enum_1.Role.User),

@@ -3,6 +3,10 @@
 import { BaseEntity } from "../entities";
 import DocumentStore, { IDocumentSession, ObjectTypeDescriptor } from "ravendb";
 import pipeable from "readable-stream";
+type attachmentConfig = {
+    contentType: string;
+    formatFile: string;
+};
 export declare class BaseRepo<TEntity extends BaseEntity> {
     protected readonly documentStore: DocumentStore;
     protected readonly descriptor: {
@@ -10,7 +14,7 @@ export declare class BaseRepo<TEntity extends BaseEntity> {
         collection: string;
     };
     protected metadataRemove(obj: TEntity): TEntity | null;
-    protected combineFormatAndFilename(fileName: string): string;
+    private searchDocuments;
     constructor(documentStore: DocumentStore, descriptor: {
         class: ObjectTypeDescriptor<TEntity>;
         collection: string;
@@ -21,15 +25,17 @@ export declare class BaseRepo<TEntity extends BaseEntity> {
     updateDocument(entity: TEntity, id: string): Promise<TEntity>;
     storeDocument(body: TEntity, addExtraProperty?: object): Promise<TEntity>;
     getById(id: string): Promise<TEntity>;
-    retrieveDocuments(): Promise<TEntity[]>;
+    retrieveDocuments(documentCount?: number, startCount?: number, exclude?: string): Promise<TEntity[]>;
     documentExists(id: string): Promise<{
         data: boolean;
     }>;
     deleteById(id: string): Promise<{
         id: string;
     }>;
-    addAttachment(documentId: string, file: Express.Multer.File): Promise<{
+    addAttachment(documentId: string, file: Express.Multer.File, config: attachmentConfig): Promise<{
         isAttachment: boolean;
+        id: string;
     }>;
-    getAttachment(attachmentId: string, format: string, res: NodeJS.WritableStream): Promise<pipeable.Readable> | never;
+    getAttachment(attachmentId: string, format: string, res: NodeJS.WritableStream | never): Promise<pipeable.Readable | any>;
 }
+export {};
